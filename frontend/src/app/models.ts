@@ -13,6 +13,29 @@ export interface TrackedDocument {
   error: string | null;
 }
 
+export interface StatusView {
+  id: string;
+  estado: DocumentStatus;
+  error: string | null;
+}
+
+export interface DocumentDetail {
+  id: string;
+  titulo: string;
+  autor: string;
+  categoria: string;
+  etiquetas: string[];
+  version: string;
+  nombreArchivo: string;
+  mimeType: string;
+  tamanoBytes: number;
+  estado: DocumentStatus;
+  error: string | null;
+  creadoEn: string;
+  actualizadoEn: string;
+  contenido: string | null;
+}
+
 export interface SearchHit {
   id: string;
   titulo: string;

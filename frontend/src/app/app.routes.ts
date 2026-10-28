@@ -9,5 +9,9 @@ export const routes: Routes = [
   {
     path: 'buscar',
     loadComponent: () => import('./pages/search/search.component').then((module) => module.SearchComponent)
+  },
+  {
+    path: 'documentos/:id',
+    loadComponent: () => import('./pages/viewer/viewer.component').then((module) => module.ViewerComponent)
   }
 ];
