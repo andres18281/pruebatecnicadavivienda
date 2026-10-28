@@ -1,0 +1,48 @@
+<section class="page-head">
+  <p class="eyebrow">HU-02 · Busqueda full-text</p>
+  <h1>Encuentra la documentacion</h1>
+  <p class="lede">Terminos o frases entre comillas, sobre titulo, metadatos y contenido. El motor responde dentro del segundo y resalta los fragmentos.</p>
+</section>
+
+<form class="panel" [formGroup]="form" (ngSubmit)="submit(0)">
+  <div class="search-bar">
+    <input formControlName="q" placeholder="por ejemplo: &quot;guia de arquitectura&quot; microservicios" aria-label="Consulta">
+    <button class="primary" type="submit">Buscar</button>
+  </div>
+  <div class="filters">
+    <input formControlName="categoria" placeholder="Categoria" aria-label="Categoria">
+    <input formControlName="etiqueta" placeholder="Etiqueta" aria-label="Etiqueta">
+  </div>
+</form>
+
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+@if (loading()) {
+  <p class="sla">Buscando...</p>
+}
+@if (page(); as result) {
+  <p class="sla">
+    {{ result.total }} resultados · {{ result.tookMs }} ms
+    @if (result.timedOut) { · resultado parcial por tiempo }
+  </p>
+  @if (result.results.length === 0) {
+    <p class="empty">No hay documentos indexados para esa consulta.</p>
+  }
+  @for (hit of result.results; track hit.id) {
+    <article class="panel result">
+      <h2><a [routerLink]="['/documentos', hit.id]" [innerHTML]="html(hit.tituloResaltado || hit.titulo)"></a></h2>
+      <p class="meta">{{ hit.autor }} · {{ hit.categoria }} · v{{ hit.version }} · {{ hit.nombreArchivo }}</p>
+      <div class="fragments">
+        @for (fragment of hit.fragmentos; track fragment) {
+          <p [innerHTML]="html(fragment)"></p>
+        }
+      </div>
+    </article>
+  }
+  <div class="pager">
+    <button class="ghost" type="button" [disabled]="result.page === 0" (click)="submit(result.page - 1)">Anterior</button>
+    <span>Pagina {{ result.page + 1 }}</span>
+    <button class="ghost" type="button" [disabled]="(result.page + 1) * result.size >= result.total" (click)="submit(result.page + 1)">Siguiente</button>
+  </div>
+}
