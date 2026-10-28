@@ -177,7 +177,7 @@ services:
   postgres:
     <<: *hardened
     image: postgres:16-alpine
-    user: "70:70"
+    user: "0:0"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
