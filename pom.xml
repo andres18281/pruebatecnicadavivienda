@@ -13,8 +13,9 @@
     <modules>
         <module>libs/contracts</module>
         <module>services/document-service</module>
-        <module>services/processing-worker</module>
         <module>services/search-service</module>
+        <module>services/processing-worker</module>
+        <module>services/notification-service</module>
     </modules>
 
     <properties>
