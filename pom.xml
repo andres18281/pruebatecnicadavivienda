@@ -17,6 +17,7 @@
         <module>services/search-service</module>
         <module>services/processing-worker</module>
         <module>services/notification-service</module>
+        <module>services/telemetry-service</module>
     </modules>
 
     <properties>

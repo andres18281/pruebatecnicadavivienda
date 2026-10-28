@@ -54,6 +54,7 @@ services:
       document-service:     { condition: service_healthy }
       search-service:       { condition: service_healthy }
       notification-service: { condition: service_healthy }
+      telemetry-service:    { condition: service_healthy }
 
   frontend:
     <<: *hardened
@@ -174,6 +175,23 @@ services:
     healthcheck: *app-healthcheck
     networks: [app-net, data-net, obs-net]
     depends_on:
+      rabbitmq: { condition: service_healthy }
+
+  telemetry-service:
+    <<: *app-service
+    build:
+      context: .
+      dockerfile: services/telemetry-service/Dockerfile
+    environment:
+      <<: *otel-env
+      OTEL_SERVICE_NAME: telemetry-service
+      PORT: "8080"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+    healthcheck: *app-healthcheck
+    networks: [app-net, data-net, obs-net]
+    depends_on:
+      postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
 
   postgres:

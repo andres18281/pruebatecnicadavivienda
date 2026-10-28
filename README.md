@@ -57,6 +57,7 @@ Carga masiva: `POST /api/v1/documents/batch` con `files` y un campo `manifest` (
 - `processing-worker`: extrae TXT, Markdown o PDF, indexa en Elasticsearch y emite el cambio de estado. Reintenta hasta 3 veces y luego marca `ERROR`.
 - `search-service`: unica ruta de busqueda. Aislada de la carga.
 - `notification-service`: WebSocket. El cliente se suscribe con `{"action":"subscribe","documentId":"..."}`.
+- `telemetry-service`: consume los eventos `telemetry.log` y `telemetry.trace` y los guarda en PostgreSQL. Se consultan en `GET /api/v1/telemetry/logs` y `GET /api/v1/telemetry/traces`.
 
 Cada servicio de aplicacion sigue puertos y adaptadores: el dominio no depende de Spring, Elasticsearch, RabbitMQ ni MinIO.
 
