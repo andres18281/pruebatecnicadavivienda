@@ -8,6 +8,7 @@ import { marked } from 'marked';
 import { switchMap } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { formatBytes } from '../../core/format';
+import { NotificationService } from '../../core/notification.service';
 import { DocumentDetail } from '../../models';
 
 @Component({
@@ -19,6 +20,7 @@ import { DocumentDetail } from '../../models';
 export class ViewerComponent {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly notifications = inject(NotificationService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -31,11 +33,15 @@ export class ViewerComponent {
       switchMap((params) => this.api.detail(params.get('id') ?? '')),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: (detail) => {
-        this.document.set(detail);
-        this.error.set(null);
-      },
+      next: (detail) => this.show(detail),
       error: (err: { error?: { message?: string } }) => this.error.set(err?.error?.message ?? 'No se encontro el documento.')
+    });
+
+    this.notifications.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
+      const current = this.document();
+      if (current && event.documentId === current.id && (event.status === 'INDEXADO' || event.status === 'ERROR')) {
+        this.api.detail(current.id).subscribe((detail) => this.show(detail));
+      }
     });
   }
 
@@ -54,5 +60,13 @@ export class ViewerComponent {
 
   isMarkdown(doc: DocumentDetail): boolean {
     return doc.mimeType === 'text/markdown' || doc.nombreArchivo.toLowerCase().endsWith('.md') || doc.nombreArchivo.toLowerCase().endsWith('.markdown');
+  }
+
+  private show(detail: DocumentDetail): void {
+    this.document.set(detail);
+    this.error.set(null);
+    if (detail.estado === 'PROCESANDO') {
+      this.notifications.subscribe(detail.id);
+    }
   }
 }

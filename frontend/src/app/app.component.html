@@ -11,8 +11,24 @@
       <a routerLink="/cargar" routerLinkActive="active">Cargar</a>
       <a routerLink="/buscar" routerLinkActive="active">Buscar</a>
     </nav>
+    <p class="live">
+      <span class="dot" [class.on]="notifications.connected()"></span>
+      {{ notifications.connected() ? 'Tiempo real activo' : 'Reconectando canal' }}
+    </p>
   </aside>
   <main>
     <router-outlet />
   </main>
+</div>
+
+<div class="toasts" aria-live="polite">
+  @for (toast of notifications.toasts(); track toast.id) {
+    <button type="button" class="toast" [class.error]="toast.estado === 'ERROR'" (click)="open(toast.documentId); notifications.dismiss(toast.id)">
+      <strong>{{ toast.estado === 'INDEXADO' ? 'Listo para buscar' : 'No se pudo indexar' }}</strong>
+      <span>{{ toast.titulo }}</span>
+      @if (toast.error) {
+        <small>{{ toast.error }}</small>
+      }
+    </button>
+  }
 </div>

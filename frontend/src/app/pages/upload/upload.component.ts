@@ -1,20 +1,21 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
-import { TrackedDocument } from '../../models';
+import { NotificationService } from '../../core/notification.service';
 
 @Component({
   selector: 'app-upload',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './upload.component.html'
 })
 export class UploadComponent {
   private readonly api = inject(ApiService);
+  readonly notifications = inject(NotificationService);
   readonly file = signal<File | null>(null);
   readonly sending = signal(false);
   readonly error = signal<string | null>(null);
-  readonly cargas = signal<TrackedDocument[]>([]);
 
   readonly form = new FormGroup({
     titulo: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(300)] }),
@@ -53,13 +54,13 @@ export class UploadComponent {
     this.error.set(null);
     this.api.upload(data).subscribe({
       next: (receipt) => {
-        this.cargas.update((list) => [{
+        this.notifications.track({
           id: receipt.id,
           titulo: value.titulo,
           nombreArchivo: selected.name,
           estado: receipt.estado,
           error: null
-        }, ...list]);
+        });
         this.file.set(null);
         this.sending.set(false);
       },

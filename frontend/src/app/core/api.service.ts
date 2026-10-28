@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { DocumentDetail, SearchPage, UploadReceipt } from '../models';
+import { DocumentDetail, SearchPage, StatusView, UploadReceipt } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -9,6 +9,10 @@ export class ApiService {
 
   upload(form: FormData): Observable<UploadReceipt> {
     return this.http.post<UploadReceipt>('/api/v1/documents', form);
+  }
+
+  status(id: string): Observable<StatusView> {
+    return this.http.get<StatusView>(`/api/v1/documents/${id}/status`);
   }
 
   detail(id: string): Observable<DocumentDetail> {

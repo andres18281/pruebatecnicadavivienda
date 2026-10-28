@@ -5,14 +5,6 @@ export interface UploadReceipt {
   estado: DocumentStatus;
 }
 
-export interface TrackedDocument {
-  id: string;
-  titulo: string;
-  nombreArchivo: string;
-  estado: DocumentStatus;
-  error: string | null;
-}
-
 export interface StatusView {
   id: string;
   estado: DocumentStatus;
@@ -57,4 +49,20 @@ export interface SearchPage {
   timedOut: boolean;
   tookMs: number;
   results: SearchHit[];
+}
+
+export interface TrackedDocument {
+  id: string;
+  titulo: string;
+  nombreArchivo: string;
+  estado: DocumentStatus;
+  error: string | null;
+}
+
+export interface StatusEvent {
+  type: string;
+  documentId: string;
+  status: DocumentStatus;
+  error: string | null;
+  occurredAt: string;
 }
