@@ -31,6 +31,8 @@ docker compose up -d --build
 
 Usuario de Grafana: `admin`. Contrasena: la variable `GRAFANA_ADMIN_PASSWORD`.
 
+Dashboards en la carpeta **TechDocs**: plataforma (SLA, CPU/RAM, colas), PostgreSQL (documentos por estado, outbox, cache) y Elasticsearch (cluster, heap, busquedas). Prometheus alerta si el p95 de busqueda supera 1 s, si Postgres o ES caen, o si hay documentos en `ERROR`.
+
 ## Ejemplo de carga
 
 ```bash

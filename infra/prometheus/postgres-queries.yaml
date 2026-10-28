@@ -1,0 +1,43 @@
+pg_techdocs_documents:
+  query: |
+    SELECT s.estado, COALESCE(d.total, 0)::float AS count
+    FROM (VALUES ('PROCESANDO'), ('INDEXADO'), ('ERROR')) AS s(estado)
+    LEFT JOIN (
+      SELECT estado::text AS estado, COUNT(*)::float AS total
+      FROM documents
+      GROUP BY estado
+    ) d ON d.estado = s.estado
+  metrics:
+    - estado:
+        usage: "LABEL"
+        description: "Estado de procesamiento del documento"
+    - count:
+        usage: "GAUGE"
+        description: "Documentos por estado de la plataforma"
+
+pg_techdocs_outbox:
+  query: |
+    SELECT
+      COUNT(*) FILTER (WHERE publicado_en IS NULL)::float AS pending,
+      COUNT(*)::float AS total
+    FROM outbox_events
+  metrics:
+    - pending:
+        usage: "GAUGE"
+        description: "Eventos de outbox pendientes de publicar"
+    - total:
+        usage: "GAUGE"
+        description: "Eventos de outbox totales"
+
+pg_techdocs_telemetry:
+  query: |
+    SELECT
+      (SELECT COUNT(*)::float FROM telemetry_logs) AS logs,
+      (SELECT COUNT(*)::float FROM telemetry_traces) AS traces
+  metrics:
+    - logs:
+        usage: "GAUGE"
+        description: "Logs de telemetria persistidos"
+    - traces:
+        usage: "GAUGE"
+        description: "Trazas de telemetria persistidas"

@@ -1,0 +1,34 @@
+groups:
+  - name: techdocs-slo
+    interval: 15s
+    rules:
+      - record: techdocs:search:p50_seconds
+        expr: |
+          histogram_quantile(0.50,
+            sum by (le) (rate(http_server_requests_seconds_bucket{service="search-service",uri="/api/v1/search"}[5m]))
+          )
+      - record: techdocs:search:p95_seconds
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_server_requests_seconds_bucket{service="search-service",uri="/api/v1/search"}[5m]))
+          )
+      - record: techdocs:search:p99_seconds
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(http_server_requests_seconds_bucket{service="search-service",uri="/api/v1/search"}[5m]))
+          )
+      - record: techdocs:http:request_rate
+        expr: sum by (service) (rate(http_server_requests_seconds_count[5m]))
+      - record: techdocs:http:error_rate
+        expr: sum by (service) (rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+      - record: techdocs:upload:rate
+        expr: sum(rate(http_server_requests_seconds_count{service="document-service",uri="/api/v1/documents",method="POST"}[5m]))
+      - record: techdocs:pg:cache_hit_ratio
+        expr: |
+          pg_stat_database_blks_hit{datname="techdocs"}
+          /
+          clamp_min(pg_stat_database_blks_hit{datname="techdocs"} + pg_stat_database_blks_read{datname="techdocs"}, 1)
+      - record: techdocs:jvm:heap_used_bytes
+        expr: sum by (service) (jvm_memory_used_bytes{area="heap"})
+      - record: techdocs:jvm:cpu_usage
+        expr: process_cpu_usage
