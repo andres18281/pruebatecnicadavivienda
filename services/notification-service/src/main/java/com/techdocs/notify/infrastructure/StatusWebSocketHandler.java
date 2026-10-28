@@ -2,6 +2,7 @@ package com.techdocs.notify.infrastructure;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.techdocs.contracts.DocumentProgressEvent;
 import com.techdocs.contracts.DocumentStatusChangedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,20 +64,11 @@ public class StatusWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void broadcast(DocumentStatusChangedEvent event) {
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(event);
-        } catch (IOException exception) {
-            log.warn("No se pudo serializar el evento de estado");
-            return;
-        }
-        Set<WebSocketSession> targets = new LinkedHashSet<>();
-        add(targets, event.documentId());
-        add(targets, "*");
-        TextMessage payload = new TextMessage(json);
-        for (WebSocketSession session : targets) {
-            send(session, payload);
-        }
+        push(event.documentId(), event);
+    }
+
+    public void broadcast(DocumentProgressEvent event) {
+        push(event.documentId(), event);
     }
 
     @Scheduled(fixedDelayString = "${app.heartbeat-ms}")
@@ -84,6 +76,23 @@ public class StatusWebSocketHandler extends TextWebSocketHandler {
         PingMessage ping = new PingMessage();
         for (WebSocketSession session : sessions) {
             send(session, ping);
+        }
+    }
+
+    private void push(String documentId, Object event) {
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(event);
+        } catch (IOException exception) {
+            log.warn("No se pudo serializar el evento");
+            return;
+        }
+        Set<WebSocketSession> targets = new LinkedHashSet<>();
+        add(targets, documentId);
+        add(targets, "*");
+        TextMessage payload = new TextMessage(json);
+        for (WebSocketSession session : targets) {
+            send(session, payload);
         }
     }
 

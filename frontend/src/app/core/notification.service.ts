@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Subject } from 'rxjs';
-import { StatusEvent, TrackedDocument } from '../models';
+import { ProgressEvent, StatusEvent, TrackedDocument } from '../models';
 import { ApiService } from './api.service';
 
 export interface Toast {
@@ -49,10 +49,16 @@ export class NotificationService {
   }
 
   track(item: TrackedDocument): void {
-    this.uploads.update((list) => [item, ...list.filter((current) => current.id !== item.id)].slice(0, 30));
+    const current: TrackedDocument = {
+      ...item,
+      percent: item.percent ?? 8,
+      stage: item.stage ?? 'RECEIVED',
+      label: item.label ?? 'Documento recibido, esperando al worker'
+    };
+    this.uploads.update((list) => [current, ...list.filter((entry) => entry.id !== current.id)].slice(0, 30));
     this.persist();
-    this.subscribe(item.id);
-    this.resyncOne(item.id);
+    this.subscribe(current.id);
+    this.resyncOne(current.id);
   }
 
   subscribe(id: string): void {
@@ -65,18 +71,30 @@ export class NotificationService {
   }
 
   private onMessage(raw: string): void {
-    let event: StatusEvent;
+    let payload: StatusEvent | ProgressEvent;
     try {
-      event = JSON.parse(raw) as StatusEvent;
+      payload = JSON.parse(raw) as StatusEvent | ProgressEvent;
     } catch {
       return;
     }
-    if (event.type !== 'document.status.changed' || !event.documentId) {
+    if (payload.type === 'document.progress') {
+      this.onProgress(payload as ProgressEvent);
       return;
     }
+    if (payload.type !== 'document.status.changed' || !payload.documentId) {
+      return;
+    }
+    const event = payload as StatusEvent;
     const estado = event.status;
     this.uploads.update((list) => list.map((item) => item.id === event.documentId
-      ? { ...item, estado, error: event.error }
+      ? {
+          ...item,
+          estado,
+          error: event.error,
+          percent: estado === 'INDEXADO' ? 100 : item.percent,
+          stage: estado === 'INDEXADO' ? 'INDEXED' : estado === 'ERROR' ? 'FAILED' : item.stage,
+          label: estado === 'INDEXADO' ? 'Indexado en Elasticsearch' : estado === 'ERROR' ? (event.error ?? 'Error al procesar') : item.label
+        }
       : item));
     this.persist();
     this.eventsSubject.next(event);
@@ -93,6 +111,24 @@ export class NotificationService {
     }
   }
 
+  private onProgress(event: ProgressEvent): void {
+    if (!event.documentId) {
+      return;
+    }
+    this.uploads.update((list) => list.map((item) => {
+      if (item.id !== event.documentId || item.estado === 'INDEXADO' || item.estado === 'ERROR') {
+        return item;
+      }
+      return {
+        ...item,
+        percent: Math.max(item.percent ?? 0, event.percent),
+        stage: event.stage,
+        label: event.label
+      };
+    }));
+    this.persist();
+  }
+
   private resync(): void {
     for (const item of this.uploads()) {
       if (item.estado === 'PROCESANDO') {
@@ -105,7 +141,18 @@ export class NotificationService {
     this.api.status(id).subscribe({
       next: (status) => {
         this.uploads.update((list) => list.map((item) => item.id === id
-          ? { ...item, estado: status.estado, error: status.error }
+          ? {
+              ...item,
+              estado: status.estado,
+              error: status.error,
+              percent: status.estado === 'INDEXADO' ? 100 : item.percent,
+              stage: status.estado === 'INDEXADO' ? 'INDEXED' : status.estado === 'ERROR' ? 'FAILED' : item.stage,
+              label: status.estado === 'INDEXADO'
+                ? 'Indexado en Elasticsearch'
+                : status.estado === 'ERROR'
+                  ? (status.error ?? item.label)
+                  : item.label
+            }
           : item));
         this.persist();
       },
@@ -140,7 +187,13 @@ export class NotificationService {
   private read(): TrackedDocument[] {
     try {
       const raw = localStorage.getItem('techdocs.uploads');
-      return raw ? JSON.parse(raw) as TrackedDocument[] : [];
+      const parsed = raw ? JSON.parse(raw) as TrackedDocument[] : [];
+      return parsed.map((item) => ({
+        ...item,
+        percent: item.percent ?? (item.estado === 'INDEXADO' ? 100 : item.estado === 'PROCESANDO' ? 8 : 0),
+        stage: item.stage ?? null,
+        label: item.label ?? null
+      }));
     } catch {
       return [];
     }

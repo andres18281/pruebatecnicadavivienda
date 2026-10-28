@@ -318,6 +318,25 @@ a.back svg { width: 16px; height: 16px; }
 }
 .meta { color: var(--muted); font-size: 0.88rem; }
 .meta.warn { color: var(--bad); }
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.progress-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold), var(--teal));
+  box-shadow: 0 0 16px rgba(62, 224, 194, 0.45);
+  transition: width 0.45s ease;
+}
+.progress-fill.done { background: linear-gradient(90deg, #3ee0c2, #5ee0a8); }
+.progress-fill.fail { background: linear-gradient(90deg, #ff9b73, var(--bad)); box-shadow: none; }
+.progress-label { font-size: 0.78rem; }
 .badge {
   justify-self: start;
   border-radius: 999px;

@@ -68,7 +68,10 @@ export class UploadComponent {
           titulo: value.titulo,
           nombreArchivo: selected.name,
           estado: receipt.estado,
-          error: null
+          error: null,
+          percent: 8,
+          stage: 'RECEIVED',
+          label: 'Documento recibido, esperando al worker'
         });
         this.file.set(null);
         this.sending.set(false);

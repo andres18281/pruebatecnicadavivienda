@@ -57,6 +57,9 @@ export interface TrackedDocument {
   nombreArchivo: string;
   estado: DocumentStatus;
   error: string | null;
+  percent: number;
+  stage: string | null;
+  label: string | null;
 }
 
 export interface StatusEvent {
@@ -64,5 +67,14 @@ export interface StatusEvent {
   documentId: string;
   status: DocumentStatus;
   error: string | null;
+  occurredAt: string;
+}
+
+export interface ProgressEvent {
+  type: string;
+  documentId: string;
+  stage: string;
+  percent: number;
+  label: string;
   occurredAt: string;
 }

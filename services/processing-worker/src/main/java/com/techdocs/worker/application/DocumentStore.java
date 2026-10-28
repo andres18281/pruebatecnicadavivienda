@@ -15,4 +15,6 @@ public interface DocumentStore {
     void recordAttempt(UUID id, int attempts);
 
     void publishStatus(DocumentStatusChangedEvent event);
+
+    void publishProgress(String documentId, String stage, int percent, String label);
 }

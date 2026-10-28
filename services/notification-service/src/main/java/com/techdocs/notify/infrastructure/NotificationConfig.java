@@ -70,4 +70,14 @@ public class NotificationConfig implements WebSocketConfigurer {
     Binding statusBinding(Queue statusQueue, TopicExchange documentEvents) {
         return BindingBuilder.bind(statusQueue).to(documentEvents).with("document.status.#");
     }
+
+    @Bean
+    Queue progressQueue() {
+        return new AnonymousQueue();
+    }
+
+    @Bean
+    Binding progressBinding(Queue progressQueue, TopicExchange documentEvents) {
+        return BindingBuilder.bind(progressQueue).to(documentEvents).with("document.progress.#");
+    }
 }

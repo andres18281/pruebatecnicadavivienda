@@ -3,6 +3,7 @@ package com.techdocs.document.infrastructure.persistence;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.techdocs.contracts.DocumentProcessCommand;
+import com.techdocs.contracts.DocumentProgressEvent;
 import com.techdocs.contracts.DocumentStatus;
 import com.techdocs.document.application.ports.out.DocumentRepository;
 import com.techdocs.document.domain.errors.DomainException;
@@ -99,6 +100,17 @@ public class PostgresDocumentRepository implements DocumentRepository {
             );
         } catch (RuntimeException exception) {
             log.warn("El evento {} quedo pendiente en el outbox: {}", outboxId, exception.getMessage());
+            return;
+        }
+        try {
+            publisher.publishProgress(DocumentProgressEvent.of(
+                    command.documentId(),
+                    "QUEUED",
+                    15,
+                    "Documento en cola de procesamiento"
+            ));
+        } catch (RuntimeException exception) {
+            log.debug("No se pudo publicar el progreso inicial de {}: {}", command.documentId(), exception.getMessage());
         }
     }
 

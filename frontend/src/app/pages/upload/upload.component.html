@@ -67,7 +67,7 @@
     </div>
     @if (notifications.uploads().length === 0) {
       <div class="empty-card">
-        <p class="empty">Todavia no hay cargas en esta sesion. El canal WebSocket avisara cuando un documento quede INDEXADO.</p>
+        <p class="empty">Todavia no hay cargas en esta sesion. El canal WebSocket ira moviendo la barra hasta INDEXADO.</p>
       </div>
     }
     @for (item of notifications.uploads(); track item.id) {
@@ -79,6 +79,12 @@
           <strong>{{ item.titulo }}</strong>
         }
         <span class="meta">{{ item.nombreArchivo }}</span>
+        @if (item.estado === 'PROCESANDO' || item.percent > 0) {
+          <div class="progress" role="progressbar" [attr.aria-valuenow]="item.percent" aria-valuemin="0" aria-valuemax="100">
+            <span class="progress-fill" [class.done]="item.estado === 'INDEXADO'" [class.fail]="item.estado === 'ERROR'" [style.width.%]="item.percent"></span>
+          </div>
+          <span class="meta progress-label">{{ item.label || 'Procesando...' }} · {{ item.percent }}%</span>
+        }
         @if (item.error) {
           <span class="meta warn">{{ item.error }}</span>
         }
