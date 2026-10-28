@@ -2,8 +2,9 @@ FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /src
 COPY pom.xml ./
 COPY libs ./libs
-COPY services/search-service ./services/search-service
-RUN mvn -B -pl services/search-service -am -DskipTests package
+COPY services ./services
+RUN --mount=type=cache,id=techdocs-m2,sharing=locked,target=/root/.m2 \
+    mvn -B -pl services/search-service -am -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
 RUN apk add --no-cache wget \

@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.techdocs.search.application.SearchCriteria;
+import com.techdocs.search.application.SearchDocumentsService;
 import com.techdocs.search.application.SearchHit;
 import com.techdocs.search.application.SearchIndexPort;
 import com.techdocs.search.application.SearchPage;
