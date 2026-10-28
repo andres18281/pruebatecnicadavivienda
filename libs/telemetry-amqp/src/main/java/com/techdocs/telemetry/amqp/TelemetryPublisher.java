@@ -73,8 +73,9 @@ final class TelemetryPublisher {
                 ? context.getName()
                 : context.getContextualName();
         long durationMs = 0;
-        if (context.getStartNanos() > 0) {
-            durationMs = Math.max(0, (System.nanoTime() - context.getStartNanos()) / 1_000_000);
+        Long startNanos = context.get(TraceObservationHandler.START_NANOS);
+        if (startNanos != null && startNanos > 0) {
+            durationMs = Math.max(0, (System.nanoTime() - startNanos) / 1_000_000);
         }
         TraceRecordedEvent payload = new TraceRecordedEvent(
                 UUID.randomUUID().toString(),
