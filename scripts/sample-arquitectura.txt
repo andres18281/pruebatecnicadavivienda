@@ -1,0 +1,7 @@
+Guia de arquitectura de la plataforma de documentacion tecnica
+
+Esta guia describe microservicios, busqueda full-text y notificaciones en tiempo real.
+El documento de arquitectura usa Elasticsearch para localizar manuales, especificaciones y guias.
+La carga es asincrona: el estado inicial es PROCESANDO y luego pasa a INDEXADO.
+El worker extrae el texto y publica un evento cuando el documento ya se puede buscar.
+No se consulta el cuerpo del documento con operadores de coincidencia parcial en la base relacional.

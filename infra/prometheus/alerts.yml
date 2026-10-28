@@ -1,0 +1,39 @@
+groups:
+  - name: techdocs-sla
+    rules:
+      # Spring Boot publica http_server_requests_seconds_* (Micrometer).
+      # El SLA de búsqueda es p95 <= 1 s.
+      - alert: SearchLatencyP95Alta
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_server_requests_seconds_bucket{service="search-service"}[5m]))
+          ) > 1
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "p95 de búsqueda supera 1 s (SLA incumplido)"
+
+      - alert: SearchLatencyP99Alta
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(http_server_requests_seconds_bucket{service="search-service"}[5m]))
+          ) > 1
+        for: 5m
+        labels: { severity: warning }
+
+      - alert: ColaProcesamientoAcumulada
+        expr: rabbitmq_detailed_queue_messages_ready{queue="documents.process"} > 500
+        for: 5m
+        labels: { severity: warning }
+
+      - alert: DeadLetterQueueConMensajes
+        expr: rabbitmq_detailed_queue_messages{queue="documents.process.dlq"} > 0
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: "Hay documentos que fallaron definitivamente (estado ERROR)"
+
+      - alert: ServicioCaido
+        expr: up == 0
+        for: 1m
+        labels: { severity: critical }

@@ -1,0 +1,39 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "refresh_interval": "1s",
+    "analysis": {
+      "filter": {
+        "spanish_stop":    { "type": "stop",    "stopwords": "_spanish_" },
+        "spanish_stemmer": { "type": "stemmer", "language": "light_spanish" }
+      },
+      "analyzer": {
+        "es_tecnico": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "asciifolding", "spanish_stop", "spanish_stemmer"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "id":             { "type": "keyword" },
+      "titulo":         { "type": "text", "analyzer": "es_tecnico",
+                          "fields": { "raw": { "type": "keyword", "ignore_above": 300 } } },
+      "autor":          { "type": "text", "analyzer": "es_tecnico",
+                          "fields": { "raw": { "type": "keyword" } } },
+      "categoria":      { "type": "keyword" },
+      "etiquetas":      { "type": "keyword" },
+      "version":        { "type": "keyword" },
+      "nombre_archivo": { "type": "keyword" },
+      "mime_type":      { "type": "keyword" },
+      "tamano_bytes":   { "type": "long" },
+      "estado":         { "type": "keyword" },
+      "creado_en":      { "type": "date" },
+      "contenido":      { "type": "text", "analyzer": "es_tecnico", "index_options": "offsets" }
+    }
+  }
+}

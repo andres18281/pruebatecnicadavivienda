@@ -1,0 +1,9 @@
+**/target
+**/node_modules
+**/dist
+data
+.git
+frontend
+**/*.md
+.idea
+.vscode

@@ -1,0 +1,11 @@
+.env
+target/
+node_modules/
+dist/
+data/minio/**
+!data/minio/.gitkeep
+*.log
+.idea/
+.vscode/
+*.iml
+.DS_Store
