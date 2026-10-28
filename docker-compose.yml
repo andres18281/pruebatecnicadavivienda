@@ -198,6 +198,9 @@ services:
     <<: *hardened
     image: postgres:16-alpine
     user: "0:0"
+    cap_drop: []
+    security_opt:
+      - no-new-privileges:false
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
