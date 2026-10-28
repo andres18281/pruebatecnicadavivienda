@@ -1,23 +1,28 @@
-<a routerLink="/buscar">Volver a la busqueda</a>
+<a class="back" routerLink="/buscar">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  Volver a la busqueda
+</a>
 
 @if (error(); as message) {
   <p class="error">{{ message }}</p>
 }
 
 @if (document(); as doc) {
-  <section class="page-head">
-    <p class="eyebrow">HU-03 · Visor</p>
-    <h1>{{ doc.titulo }}</h1>
-    <p class="lede">{{ doc.nombreArchivo }} · {{ doc.estado }}</p>
+  <section class="page-head viewer-head">
+    <p class="eyebrow">HU-03 · Lectura</p>
+    <div class="title-row">
+      <h1>{{ doc.titulo }}</h1>
+      <span class="badge" [class.PROCESANDO]="doc.estado === 'PROCESANDO'" [class.INDEXADO]="doc.estado === 'INDEXADO'" [class.ERROR]="doc.estado === 'ERROR'">{{ doc.estado }}</span>
+    </div>
+    <p class="lede">{{ doc.nombreArchivo }} · {{ bytes(doc.tamanoBytes) }}</p>
   </section>
 
   <div class="viewer">
-    <aside class="panel">
+    <aside class="panel meta-panel">
       <dl>
         <div><dt>Autor</dt><dd>{{ doc.autor }}</dd></div>
         <div><dt>Categoria</dt><dd>{{ doc.categoria }}</dd></div>
         <div><dt>Version</dt><dd>{{ doc.version }}</dd></div>
-        <div><dt>Tamano</dt><dd>{{ bytes(doc.tamanoBytes) }}</dd></div>
         <div><dt>Tipo</dt><dd>{{ doc.mimeType }}</dd></div>
         <div><dt>Creado</dt><dd>{{ doc.creadoEn | date:'dd MMM yyyy, HH:mm' }}</dd></div>
         <div>
@@ -35,13 +40,15 @@
 
     <article class="panel prose">
       @if (doc.estado === 'PROCESANDO') {
-        <p>El documento se esta procesando. Esta vista se actualizara cuando quede indexado.</p>
+        <div class="empty-card">
+          <p>El documento se esta procesando. Esta vista se actualizara cuando quede indexado.</p>
+        </div>
       } @else if (doc.estado === 'ERROR') {
         <p class="error">{{ doc.error || 'No se pudo indexar el documento.' }}</p>
       } @else if (!doc.contenido) {
         <p>El documento esta indexado, pero el cuerpo todavia no esta disponible.</p>
       } @else if (isMarkdown(doc)) {
-        <div [innerHTML]="markdown(doc.contenido)"></div>
+        <div class="md" [innerHTML]="markdown(doc.contenido)"></div>
       } @else if (doc.mimeType === 'application/pdf') {
         @for (page of pages(doc.contenido); track page.title) {
           <section class="page-block">

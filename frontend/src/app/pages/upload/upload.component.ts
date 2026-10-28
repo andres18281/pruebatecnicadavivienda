@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
+import { formatBytes } from '../../core/format';
 import { NotificationService } from '../../core/notification.service';
 
 @Component({
@@ -14,8 +15,10 @@ export class UploadComponent {
   private readonly api = inject(ApiService);
   readonly notifications = inject(NotificationService);
   readonly file = signal<File | null>(null);
+  readonly over = signal(false);
   readonly sending = signal(false);
   readonly error = signal<string | null>(null);
+  readonly size = formatBytes;
 
   readonly form = new FormGroup({
     titulo: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.maxLength(300)] }),
@@ -30,8 +33,14 @@ export class UploadComponent {
     this.file.set(input.files?.[0] ?? null);
   }
 
+  onOver(event: DragEvent, value: boolean): void {
+    event.preventDefault();
+    this.over.set(value);
+  }
+
   drop(event: DragEvent): void {
     event.preventDefault();
+    this.over.set(false);
     this.file.set(event.dataTransfer?.files?.[0] ?? null);
   }
 

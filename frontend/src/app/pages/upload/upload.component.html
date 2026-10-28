@@ -1,29 +1,59 @@
 <section class="page-head">
-  <p class="eyebrow">HU-01 · Carga asincrona</p>
-  <h1>Sube un documento con sus metadatos</h1>
-  <p class="lede">La respuesta llega de inmediato con un identificador y el estado PROCESANDO. Cuando termine la indexacion, la pantalla cambia sola.</p>
+  <p class="eyebrow">HU-01 · Ingesta</p>
+  <h1>Deja el documento. Nosotros lo indexamos.</h1>
+  <p class="lede">Respuesta inmediata con identificador y estado PROCESANDO. Cuando Elasticsearch termine, esta pantalla cambia sola — sin recargar.</p>
 </section>
 
 <div class="grid">
-  <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
-    <label class="drop" [class.ready]="file()" (dragover)="$event.preventDefault()" (drop)="drop($event)">
+  <form class="panel glow-panel" [formGroup]="form" (ngSubmit)="submit()">
+    <label
+      class="drop"
+      [class.ready]="file()"
+      [class.over]="over()"
+      (dragover)="onOver($event, true)"
+      (dragleave)="onOver($event, false)"
+      (drop)="drop($event)"
+    >
       <input type="file" accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" (change)="pick($event)">
+      <span class="drop-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <rect x="8" y="6" width="24" height="32" rx="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M18 20h12M18 26h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="34" cy="34" r="9" fill="currentColor"/>
+          <path d="M34 30v8M30 34h8" stroke="#071016" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
       @if (file(); as selected) {
-        <span><strong>{{ selected.name }}</strong><span>{{ selected.type || 'archivo seleccionado' }}</span></span>
+        <span>
+          <strong>{{ selected.name }}</strong>
+          <span>{{ selected.type || 'archivo seleccionado' }} · {{ size(selected.size) }}</span>
+        </span>
       } @else {
-        <span><strong>Arrastra un TXT, Markdown o PDF</strong><span>o haz clic para elegirlo. Maximo 50 MB.</span></span>
+        <span>
+          <strong>Suelta un TXT, Markdown o PDF</strong>
+          <span>o haz clic para elegirlo. Maximo 50 MB.</span>
+        </span>
       }
+      <span class="chips">
+        <span>.txt</span>
+        <span>.md</span>
+        <span>.pdf</span>
+      </span>
     </label>
+
     <div class="fields">
-      <label class="wide">Titulo<input formControlName="titulo" maxlength="300"></label>
-      <label>Autor<input formControlName="autor" maxlength="200"></label>
-      <label>Categoria<input formControlName="categoria" maxlength="100"></label>
+      <label class="wide">Titulo<input formControlName="titulo" maxlength="300" placeholder="Guia de arquitectura"></label>
+      <label>Autor<input formControlName="autor" maxlength="200" placeholder="Ana Ruiz"></label>
+      <label>Categoria<input formControlName="categoria" maxlength="100" placeholder="arquitectura"></label>
       <label>Version<input formControlName="version" maxlength="50"></label>
-      <label>Etiquetas<input formControlName="etiquetas" placeholder="arquitectura, microservicios"></label>
+      <label class="wide">Etiquetas<input formControlName="etiquetas" placeholder="microservicios, elasticsearch, sla"></label>
     </div>
+
     <div class="actions">
-      <button class="primary" type="submit" [disabled]="sending()">{{ sending() ? 'Enviando...' : 'Cargar documento' }}</button>
-      <span class="hint">La busqueda usa Elasticsearch, no la base relacional.</span>
+      <button class="primary" type="submit" [disabled]="sending()">
+        {{ sending() ? 'Enviando...' : 'Cargar documento' }}
+      </button>
+      <span class="hint">La busqueda no pasa por Postgres. El motor es Elasticsearch.</span>
     </div>
     @if (error(); as message) {
       <p class="error">{{ message }}</p>
@@ -31,12 +61,17 @@
   </form>
 
   <section class="panel feed">
-    <h2>Seguimiento</h2>
+    <div class="panel-head">
+      <h2>Seguimiento en vivo</h2>
+      <span class="count">{{ notifications.uploads().length }}</span>
+    </div>
     @if (notifications.uploads().length === 0) {
-      <p class="empty">Todavia no hay cargas en esta sesion.</p>
+      <div class="empty-card">
+        <p class="empty">Todavia no hay cargas en esta sesion. El canal WebSocket avisara cuando un documento quede INDEXADO.</p>
+      </div>
     }
     @for (item of notifications.uploads(); track item.id) {
-      <article class="card">
+      <article class="card" [class.pulse]="item.estado === 'PROCESANDO'">
         <span class="badge" [class.PROCESANDO]="item.estado === 'PROCESANDO'" [class.INDEXADO]="item.estado === 'INDEXADO'" [class.ERROR]="item.estado === 'ERROR'">{{ item.estado }}</span>
         @if (item.estado === 'INDEXADO') {
           <a [routerLink]="['/documentos', item.id]">{{ item.titulo }}</a>
@@ -45,7 +80,7 @@
         }
         <span class="meta">{{ item.nombreArchivo }}</span>
         @if (item.error) {
-          <span class="meta">{{ item.error }}</span>
+          <span class="meta warn">{{ item.error }}</span>
         }
       </article>
     }

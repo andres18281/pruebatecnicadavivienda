@@ -1,21 +1,50 @@
+<div class="aurora" aria-hidden="true">
+  <span class="orb orb-a"></span>
+  <span class="orb orb-b"></span>
+  <span class="orb orb-c"></span>
+</div>
+
 <div class="shell">
   <aside class="rail">
     <a class="brand" routerLink="/cargar">
-      <span class="brand-mark">Td</span>
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M7 8.5h13.5a4.5 4.5 0 0 1 0 9H13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M13 17.5h8.5a4.5 4.5 0 0 1 0 9H7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </span>
       <span>
         <strong>TechDocs</strong>
-        <small>Documentacion tecnica</small>
+        <small>Knowledge studio</small>
       </span>
     </a>
+
     <nav>
-      <a routerLink="/cargar" routerLinkActive="active">Cargar</a>
-      <a routerLink="/buscar" routerLinkActive="active">Buscar</a>
+      <a routerLink="/cargar" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4M12 4 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 16v2.2A1.8 1.8 0 0 0 6.8 20h10.4A1.8 1.8 0 0 0 19 18.2V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>
+          <strong>Cargar</strong>
+          <small>Indexacion asincrona</small>
+        </span>
+      </a>
+      <a routerLink="/buscar" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>
+          <strong>Buscar</strong>
+          <small>Full-text en un segundo</small>
+        </span>
+      </a>
     </nav>
-    <p class="live">
-      <span class="dot" [class.on]="notifications.connected()"></span>
-      {{ notifications.connected() ? 'Tiempo real activo' : 'Reconectando canal' }}
-    </p>
+
+    <div class="rail-foot">
+      <p class="live">
+        <span class="dot" [class.on]="notifications.connected()"></span>
+        {{ notifications.connected() ? 'Canal en vivo' : 'Reconectando' }}
+      </p>
+      <p class="rail-note">Elasticsearch responde. Postgres guarda el estado. El visor se actualiza solo.</p>
+    </div>
   </aside>
+
   <main>
     <router-outlet />
   </main>
@@ -24,6 +53,7 @@
 <div class="toasts" aria-live="polite">
   @for (toast of notifications.toasts(); track toast.id) {
     <button type="button" class="toast" [class.error]="toast.estado === 'ERROR'" (click)="open(toast.documentId); notifications.dismiss(toast.id)">
+      <span class="toast-kicker">{{ toast.estado === 'INDEXADO' ? 'Indexado' : 'Error' }}</span>
       <strong>{{ toast.estado === 'INDEXADO' ? 'Listo para buscar' : 'No se pudo indexar' }}</strong>
       <span>{{ toast.titulo }}</span>
       @if (toast.error) {
