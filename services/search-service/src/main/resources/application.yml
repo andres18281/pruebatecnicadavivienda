@@ -1,0 +1,31 @@
+server:
+  port: ${PORT:8080}
+  tomcat:
+    basedir: /tmp
+
+spring:
+  application:
+    name: search-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+  metrics:
+    tags:
+      service: search-service
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+app:
+  search-timeout-ms: ${SEARCH_TIMEOUT_MS:900}
+  max-page-size: ${SEARCH_MAX_PAGE_SIZE:50}
+
+logging:
+  pattern:
+    console: '{"time":"%d{yyyy-MM-dd''T''HH:mm:ss.SSS}","level":"%level","service":"search-service","message":"%m"}%n'
