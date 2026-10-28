@@ -12,6 +12,7 @@
 
     <modules>
         <module>libs/contracts</module>
+        <module>libs/telemetry-amqp</module>
         <module>services/document-service</module>
         <module>services/search-service</module>
         <module>services/processing-worker</module>
@@ -41,6 +42,11 @@
             <dependency>
                 <groupId>com.techdocs</groupId>
                 <artifactId>contracts</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.techdocs</groupId>
+                <artifactId>telemetry-amqp</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
