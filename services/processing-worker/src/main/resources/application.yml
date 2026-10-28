@@ -1,0 +1,38 @@
+server:
+  port: ${METRICS_PORT:9100}
+  tomcat:
+    basedir: /tmp
+
+spring:
+  application:
+    name: processing-worker
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  rabbitmq:
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: ${RABBITMQ_PREFETCH:2}
+        default-requeue-rejected: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+  metrics:
+    tags:
+      service: processing-worker
+
+app:
+  max-retries: ${MAX_RETRIES:3}
+
+logging:
+  pattern:
+    console: '{"time":"%d{yyyy-MM-dd''T''HH:mm:ss.SSS}","level":"%level","service":"processing-worker","message":"%m"}%n'
