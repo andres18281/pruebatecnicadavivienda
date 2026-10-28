@@ -1,0 +1,47 @@
+server:
+  port: ${PORT:8080}
+  tomcat:
+    basedir: /tmp
+    max-http-form-post-size: 55MB
+    max-swallow-size: 55MB
+
+spring:
+  application:
+    name: document-service
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_MB:50}MB
+      max-request-size: 55MB
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  rabbitmq:
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 2
+        default-requeue-rejected: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+  metrics:
+    tags:
+      service: document-service
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+app:
+  max-upload-mb: ${MAX_UPLOAD_MB:50}
+
+logging:
+  pattern:
+    console: '{"time":"%d{yyyy-MM-dd''T''HH:mm:ss.SSS}","level":"%level","service":"document-service","message":"%m"}%n'
