@@ -1,0 +1,45 @@
+<section class="page-head">
+  <p class="eyebrow">HU-01 · Carga asincrona</p>
+  <h1>Sube un documento con sus metadatos</h1>
+  <p class="lede">La respuesta llega de inmediato con un identificador y el estado PROCESANDO.</p>
+</section>
+
+<div class="grid">
+  <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+    <label class="drop" [class.ready]="file()" (dragover)="$event.preventDefault()" (drop)="drop($event)">
+      <input type="file" accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" (change)="pick($event)">
+      @if (file(); as selected) {
+        <span><strong>{{ selected.name }}</strong><span>{{ selected.type || 'archivo seleccionado' }}</span></span>
+      } @else {
+        <span><strong>Arrastra un TXT, Markdown o PDF</strong><span>o haz clic para elegirlo. Maximo 50 MB.</span></span>
+      }
+    </label>
+    <div class="fields">
+      <label class="wide">Titulo<input formControlName="titulo" maxlength="300"></label>
+      <label>Autor<input formControlName="autor" maxlength="200"></label>
+      <label>Categoria<input formControlName="categoria" maxlength="100"></label>
+      <label>Version<input formControlName="version" maxlength="50"></label>
+      <label>Etiquetas<input formControlName="etiquetas" placeholder="arquitectura, microservicios"></label>
+    </div>
+    <div class="actions">
+      <button class="primary" type="submit" [disabled]="sending()">{{ sending() ? 'Enviando...' : 'Cargar documento' }}</button>
+    </div>
+    @if (error(); as message) {
+      <p class="error">{{ message }}</p>
+    }
+  </form>
+
+  <section class="panel feed">
+    <h2>Seguimiento</h2>
+    @if (cargas().length === 0) {
+      <p class="empty">Todavia no hay cargas en esta sesion.</p>
+    }
+    @for (item of cargas(); track item.id) {
+      <article class="card">
+        <span class="badge" [class.PROCESANDO]="item.estado === 'PROCESANDO'" [class.INDEXADO]="item.estado === 'INDEXADO'" [class.ERROR]="item.estado === 'ERROR'">{{ item.estado }}</span>
+        <strong>{{ item.titulo }}</strong>
+        <span class="meta">{{ item.nombreArchivo }}</span>
+      </article>
+    }
+  </section>
+</div>
