@@ -33,7 +33,7 @@ x-app-healthcheck: &app-healthcheck
   interval: 10s
   timeout: 3s
   retries: 6
-  start_period: 40s
+  start_period: 120s
 
 services:
 
