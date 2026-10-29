@@ -31,7 +31,7 @@
     {
       "id": 2,
       "type": "stat",
-      "title": "Disco usable",
+      "title": "Capacidad del volumen",
       "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "refId": "A", "expr": "techdocs:minio:usable_bytes" }],
@@ -47,7 +47,7 @@
     {
       "id": 3,
       "type": "stat",
-      "title": "Disco libre",
+      "title": "Libre en el host",
       "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "refId": "A", "expr": "techdocs:minio:free_bytes" }],
@@ -70,7 +70,7 @@
     {
       "id": 4,
       "type": "gauge",
-      "title": "Disco ocupado",
+      "title": "Datos vs capacidad",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "refId": "A", "expr": "techdocs:minio:disk_used_ratio" }],
@@ -133,7 +133,7 @@
     {
       "id": 7,
       "type": "timeseries",
-      "title": "Espacio del cluster (usado / libre / total)",
+      "title": "Objetos MinIO vs disco del host (libre / total)",
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [

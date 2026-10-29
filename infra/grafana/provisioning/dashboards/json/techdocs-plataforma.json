@@ -320,7 +320,8 @@
     {
       "id": 18,
       "type": "gauge",
-      "title": "Disco MinIO usado",
+      "title": "Datos MinIO vs capacidad",
+      "description": "Porcentaje que ocupan los objetos de MinIO sobre la capacidad usable. No es el disco del host.",
       "gridPos": { "h": 4, "w": 4, "x": 20, "y": 29 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "refId": "A", "expr": "techdocs:minio:disk_used_ratio" }],

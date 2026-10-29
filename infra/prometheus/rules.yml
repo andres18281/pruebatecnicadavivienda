@@ -44,6 +44,11 @@ groups:
         expr: minio_cluster_capacity_usable_free_bytes
       - record: techdocs:minio:disk_used_ratio
         expr: |
+          minio_cluster_usage_total_bytes
+          /
+          clamp_min(minio_cluster_capacity_usable_total_bytes, 1)
+      - record: techdocs:minio:volume_used_ratio
+        expr: |
           1 - (
             minio_cluster_capacity_usable_free_bytes
             /

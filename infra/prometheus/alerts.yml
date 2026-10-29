@@ -92,7 +92,7 @@ groups:
         for: 10m
         labels: { severity: warning }
         annotations:
-          summary: "MinIO usa mas del 85% del disco usable"
+          summary: "Los objetos de MinIO ocupan mas del 85% de la capacidad usable"
 
       - alert: ElasticsearchDiscoAlto
         expr: techdocs:es:disk_used_ratio > 0.85
