@@ -3,7 +3,7 @@
   "title": "TechDocs · Plataforma",
   "tags": ["techdocs", "sla", "jvm"],
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "10s",
   "timezone": "browser",
   "graphTooltip": 1,
@@ -461,6 +461,26 @@
         }
       },
       "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 25,
+      "type": "logs",
+      "title": "Logs de los servicios",
+      "description": "Loki guarda los logs que el agente OpenTelemetry envia. Este panel mira 2 dias aunque el tablero este en la ultima hora, porque los servicios solo escriben cuando ocurre algo.",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 54 },
+      "timeFrom": "2d",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "refId": "A", "expr": "{service_name=~\".+\"}" }],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      }
     }
   ]
 }
