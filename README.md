@@ -15,6 +15,73 @@ El rango de 400 ms a 1000 ms es el SLA de latencia maxima de la busqueda (p95 <=
 | HU-03 Visor | `GET /api/v1/documents/{id}` devuelve metadatos y cuerpo. El frontend renderiza Markdown o el texto del PDF por paginas, sin descargar el archivo. |
 | HU-04 Tiempo real | El worker publica `document.progress` y `document.status.changed` en RabbitMQ. `notification-service` los empuja por WebSocket `/ws`. La interfaz se actualiza sin polling. |
 
+## Tecnologias y versiones
+
+Los microservicios se construyen con Maven 3.9.9 y Java 21 (imagen `maven:3.9.9-eclipse-temurin-21`, runtime `eclipse-temurin:21-jre`). El frontend se construye con Node 20 y se sirve con Nginx. No hay llamadas HTTP de un microservicio a otro: el trabajo entre ellos pasa por RabbitMQ.
+
+| Pieza | Version | Uso |
+|---|---|---|
+| Java | 21 | Runtime de los seis servicios. |
+| Spring Boot | 3.4.5 | API, JDBC, AMQP, WebSocket, Actuator. |
+| Angular | 19.2.14 | Carga, busqueda, visor y progreso. |
+| TypeScript | 5.7 | Frontend. |
+| Nginx | 1.27 (unprivileged) | Puerta de enlace y el contenedor del frontend. |
+| PostgreSQL | 16 (Alpine) | Metadatos, estado, outbox y telemetria. |
+| Elasticsearch | 8.15.3 | Indice full-text. |
+| RabbitMQ | 3.13 (management) | Comandos, reintentos, eventos y telemetria. |
+| Silo (API S3, compatible con MinIO) | `RELEASE.2026-10-26` | Bucket `documents`. |
+| OpenTelemetry Java agent | 2.11.0 | Trazas y logs OTLP de cada JVM. |
+| OpenTelemetry Collector | 0.111.0 | Recibe OTLP y reenvia a Jaeger y Loki. |
+| Prometheus | 2.55.0 | Metricas y alertas. |
+| Grafana | 11.3.0 | Tableros. |
+| Loki | 3.2.0 | Logs OTLP. |
+| Jaeger | 1.62.0 | Trazas OTLP. |
+| cAdvisor | 0.49.1 | CPU y RAM de contenedores. |
+
+### Librerias
+
+| Libreria | Version | Donde |
+|---|---|---|
+| `elasticsearch-java` y REST client | 8.15.3 | `document-service`, `search-service`, `processing-worker`. |
+| Cliente MinIO (`io.minio`) | 8.5.17 | `document-service` y el worker. Habla con Silo por la API S3. |
+| Apache PDFBox | 3.0.4 | Extraccion de texto PDF en el worker. |
+| Resilience4j | 2.2.0 | Circuit breaker de Elasticsearch y MinIO. Libreria propia `libs/resilience`. |
+| Micrometer Prometheus | la que trae Spring Boot 3.4.5 | `GET /metrics` en cada servicio. |
+| Driver JDBC PostgreSQL | la que trae Spring Boot 3.4.5 | `document-service`, worker y `telemetry-service`. Consultas con `?`, sin SQL armado por concatenacion. |
+| `libs/contracts` | 1.0.0 | Eventos y DTOs compartidos (`document.process`, progreso, estado, logs y trazas). |
+| `libs/telemetry-amqp` | 1.0.0 | Appender de Logback y observaciones Micrometer que publican en RabbitMQ. |
+| ArchUnit | 1.3.0 | Test de arquitectura hexagonal en `document-service`. |
+| DOMPurify | 3.2.6 | El visor limpia el HTML del Markdown. |
+| marked | 15.0.12 | Markdown a HTML en el visor. |
+| RxJS | 7.8 | Cliente HTTP y WebSocket del frontend. |
+
+Maven Compiler Plugin 3.13.0 y Surefire 3.5.2. Node del frontend: 20.
+
+### Como se comunican
+
+El navegador solo habla con Nginx, por HTTP y por WebSocket, en el puerto 8080. Nginx reparte `/api/v1/documents`, `/api/v1/search`, `/api/v1/telemetry` y `/ws`. No hay Feign ni HTTP entre microservicios.
+
+| De | A | Medio |
+|---|---|---|
+| Navegador | Nginx | HTTP y WebSocket. |
+| Nginx | frontend, document, search, notification, telemetry | HTTP interno de Docker. El worker no esta en esa ruta. |
+| `document-service` | PostgreSQL | JDBC. |
+| `document-service` | Silo | Cliente S3 (`io.minio`). |
+| `document-service` | Elasticsearch | Cliente Java, solo para el cuerpo del visor. La busqueda no pasa por este servicio. |
+| `document-service` | RabbitMQ | Outbox: el comando `document.process` sale de PostgreSQL, no en el mismo hilo del `POST`. |
+| RabbitMQ | `processing-worker` | Cola `documents.process`. Reintento a los 30 s. Dead letter al tercer fallo. |
+| Worker | Silo, Elasticsearch, PostgreSQL | S3, cliente Elasticsearch y JDBC. |
+| Worker | RabbitMQ | `document.progress` y `document.status.changed`. |
+| RabbitMQ | `notification-service` | Esos eventos. El servicio los empuja por WebSocket. |
+| `search-service` | Elasticsearch | Cliente Java. `simple_query_string`, timeout 900 ms. |
+| Cada JVM (salvo telemetry) | RabbitMQ | Exchange `platform.telemetry`. Claves `telemetry.log` y `telemetry.trace`. |
+| RabbitMQ | `telemetry-service` | Colas `telemetry.logs` y `telemetry.traces`. El servicio las guarda en PostgreSQL. |
+| Agente OpenTelemetry | Collector | OTLP HTTP en el puerto 4318. |
+| Collector | Jaeger y Loki | OTLP. |
+| Prometheus | servicios, Postgres, Elasticsearch, cAdvisor | Scrape HTTP de `/metrics`. |
+
+Los servicios se encuentran por el nombre de Docker (`postgres`, `elasticsearch`, `rabbitmq`, `minio`) dentro de `app-net`, `data-net` y `obs-net`. Esas redes son `internal: true`.
+
 ## Componentes
 
 El navegador solo entra por Nginx (`8080`). El resto de los contenedores vive en redes Docker internas (`app-net`, `data-net`, `obs-net`) y no publica puertos. Grafana es la otra excepcion y queda atado a `127.0.0.1:3000`.
