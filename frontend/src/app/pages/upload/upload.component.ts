@@ -12,6 +12,8 @@ import { NotificationService } from '../../core/notification.service';
   templateUrl: './upload.component.html'
 })
 export class UploadComponent {
+  static readonly maxUploadBytes = 10 * 1024 * 1024;
+
   private readonly api = inject(ApiService);
   readonly notifications = inject(NotificationService);
   readonly file = signal<File | null>(null);
@@ -30,7 +32,8 @@ export class UploadComponent {
 
   pick(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.file.set(input.files?.[0] ?? null);
+    this.accept(input.files?.[0] ?? null);
+    input.value = '';
   }
 
   onOver(event: DragEvent, value: boolean): void {
@@ -41,7 +44,7 @@ export class UploadComponent {
   drop(event: DragEvent): void {
     event.preventDefault();
     this.over.set(false);
-    this.file.set(event.dataTransfer?.files?.[0] ?? null);
+    this.accept(event.dataTransfer?.files?.[0] ?? null);
   }
 
   submit(): void {
@@ -49,6 +52,10 @@ export class UploadComponent {
     if (this.form.invalid || !selected) {
       this.form.markAllAsTouched();
       this.error.set(selected ? 'Revisa los metadatos obligatorios.' : 'Selecciona un archivo TXT, Markdown o PDF.');
+      return;
+    }
+    if (selected.size > UploadComponent.maxUploadBytes) {
+      this.error.set('El archivo supera el maximo de 10 MB.');
       return;
     }
     const value = this.form.getRawValue();
@@ -81,5 +88,19 @@ export class UploadComponent {
         this.error.set(err?.error?.message ?? 'No se pudo cargar el documento.');
       }
     });
+  }
+
+  private accept(selected: File | null): void {
+    if (!selected) {
+      this.file.set(null);
+      return;
+    }
+    if (selected.size > UploadComponent.maxUploadBytes) {
+      this.file.set(null);
+      this.error.set('El archivo supera el maximo de 10 MB.');
+      return;
+    }
+    this.error.set(null);
+    this.file.set(selected);
   }
 }
