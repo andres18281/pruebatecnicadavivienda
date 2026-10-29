@@ -15,6 +15,8 @@ import com.techdocs.document.application.views.DocumentFile;
 import com.techdocs.document.application.views.StatusView;
 import com.techdocs.document.application.views.UploadReceipt;
 import com.techdocs.document.domain.errors.DomainException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -40,6 +42,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/documents")
 public class DocumentController {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
 
     private final UploadDocumentUseCase uploadDocument;
     private final UploadBatchUseCase uploadBatch;
@@ -84,6 +88,7 @@ public class DocumentController {
                 version,
                 traceparent
         ));
+        log.info("evento=carga id={} estado={} archivo={}", receipt.id(), receipt.estado(), file.getOriginalFilename());
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(receipt);
     }
 
@@ -93,9 +98,9 @@ public class DocumentController {
             @RequestParam("manifest") String manifest,
             @RequestHeader(value = "traceparent", required = false) String traceparent
     ) throws IOException {
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-                uploadBatch.execute(new BatchUploadCommand(match(files, manifest, traceparent)))
-        );
+        List<BatchReceipt> receipts = uploadBatch.execute(new BatchUploadCommand(match(files, manifest, traceparent)));
+        log.info("evento=carga-masiva archivos={} aceptados={}", files.size(), receipts.size());
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(receipts);
     }
 
     @GetMapping("/{id}")

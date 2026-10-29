@@ -48,8 +48,10 @@ public class ProcessDocumentListener {
     ) throws IOException {
         int previousFailures = attempts(message);
         try {
+            log.info("evento=procesar documentId={}", command.documentId());
             service.process(command);
             channel.basicAck(deliveryTag, false);
+            log.info("evento=procesado documentId={}", command.documentId());
         } catch (OpenCircuitException exception) {
             log.warn("Circuito abierto ({}) al procesar {}: {}", exception.dependency(), command.documentId(), exception.getMessage());
             try {

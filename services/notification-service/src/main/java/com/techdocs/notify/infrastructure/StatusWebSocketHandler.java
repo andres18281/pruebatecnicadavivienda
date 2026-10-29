@@ -49,6 +49,7 @@ public class StatusWebSocketHandler extends TextWebSocketHandler {
         }
         if ("subscribe".equals(action)) {
             byDocument.computeIfAbsent(documentId, key -> ConcurrentHashMap.newKeySet()).add(session);
+            log.info("evento=suscripcion documentId={}", documentId);
         } else if ("unsubscribe".equals(action)) {
             Set<WebSocketSession> subscribers = byDocument.get(documentId);
             if (subscribers != null) {
@@ -91,6 +92,7 @@ public class StatusWebSocketHandler extends TextWebSocketHandler {
         add(targets, documentId);
         add(targets, "*");
         TextMessage payload = new TextMessage(json);
+        log.info("evento=aviso documentId={} destinatarios={}", documentId, targets.size());
         for (WebSocketSession session : targets) {
             send(session, payload);
         }

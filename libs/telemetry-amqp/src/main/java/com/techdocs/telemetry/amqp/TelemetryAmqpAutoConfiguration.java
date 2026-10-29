@@ -17,7 +17,11 @@ import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -78,5 +82,16 @@ public class TelemetryAmqpAutoConfiguration {
     @Bean
     ObservationHandler<Observation.Context> traceObservationHandler(TelemetryPublisher telemetryPublisher) {
         return new TraceObservationHandler(telemetryPublisher);
+    }
+
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    @ConditionalOnClass(OncePerRequestFilter.class)
+    FilterRegistrationBean<RequestEventFilter> requestEventFilter() {
+        FilterRegistrationBean<RequestEventFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new RequestEventFilter());
+        registration.addUrlPatterns("/*");
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 20);
+        return registration;
     }
 }
