@@ -1,7 +1,4 @@
-<a class="back" routerLink="/buscar">
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  Volver a la busqueda
-</a>
+<a class="back" routerLink="/buscar">Volver</a>
 
 @if (error(); as message) {
   <p class="error">{{ message }}</p>
@@ -9,29 +6,26 @@
 
 @if (loading()) {
   <div class="skeleton" aria-hidden="true">
-    <span></span><span></span><span></span>
+    <span></span><span></span>
   </div>
 }
 
 @if (document(); as doc) {
-  <section class="page-head viewer-head">
-    <p class="eyebrow">HU-03 · Lectura</p>
+  <section class="viewer-head">
     <div class="title-row">
       <h1>{{ doc.titulo }}</h1>
       <span class="badge" [class.PROCESANDO]="doc.estado === 'PROCESANDO'" [class.INDEXADO]="doc.estado === 'INDEXADO'" [class.ERROR]="doc.estado === 'ERROR'">{{ doc.estado }}</span>
     </div>
-    <p class="lede">{{ doc.nombreArchivo }} · {{ bytes(doc.tamanoBytes) }}. Lee el archivo aqui, sin descargarlo.</p>
+    <p class="meta">{{ doc.nombreArchivo }} · {{ bytes(doc.tamanoBytes) }}</p>
   </section>
 
   <div class="viewer">
     <aside class="panel meta-panel">
-      <p class="meta-kicker">Metadatos</p>
       <dl>
         <div><dt>Autor</dt><dd>{{ doc.autor }}</dd></div>
         <div><dt>Categoria</dt><dd>{{ doc.categoria }}</dd></div>
         <div><dt>Version</dt><dd>{{ doc.version }}</dd></div>
         <div><dt>Tipo</dt><dd>{{ doc.mimeType }}</dd></div>
-        <div><dt>Archivo</dt><dd>{{ doc.nombreArchivo }}</dd></div>
         <div><dt>Tamano</dt><dd>{{ bytes(doc.tamanoBytes) }}</dd></div>
         <div><dt>Creado</dt><dd>{{ doc.creadoEn | date:'dd MMM yyyy, HH:mm' }}</dd></div>
         <div><dt>Actualizado</dt><dd>{{ doc.actualizadoEn | date:'dd MMM yyyy, HH:mm' }}</dd></div>
@@ -61,9 +55,7 @@
           @if (previewUrl(); as url) {
             <iframe class="preview-frame" [src]="url" title="Vista previa del PDF"></iframe>
           } @else {
-            <div class="empty-card">
-              <p>Preparando la vista previa del PDF...</p>
-            </div>
+            <p class="empty">Cargando el archivo...</p>
           }
         } @else {
           @if (originalText(); as text) {
@@ -73,19 +65,15 @@
               <pre>{{ text }}</pre>
             }
           } @else {
-            <div class="empty-card">
-              <p>Cargando el archivo original para leerlo en pantalla...</p>
-            </div>
+            <p class="empty">Cargando el archivo...</p>
           }
         }
       } @else if (doc.estado === 'PROCESANDO') {
-        <div class="empty-card">
-          <p>El texto extraido aparece cuando el documento quede indexado. Mientras tanto puedes leer el archivo original.</p>
-        </div>
+        <p class="empty">El texto extraido estara disponible cuando el documento quede indexado.</p>
       } @else if (doc.estado === 'ERROR') {
         <p class="error">{{ doc.error || 'No se pudo indexar el documento.' }}</p>
       } @else if (!doc.contenido) {
-        <p>El documento esta indexado, pero el cuerpo todavia no esta disponible.</p>
+        <p class="empty">El cuerpo todavia no esta disponible.</p>
       } @else if (isMarkdown(doc)) {
         <div class="md" [innerHTML]="markdown(doc.contenido)"></div>
       } @else if (isPdf(doc)) {

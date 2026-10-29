@@ -1,20 +1,16 @@
 <section class="page-head">
-  <p class="eyebrow">HU-02 · Full-text</p>
-  <h1>Pregunta a la documentacion.</h1>
-  <p class="lede">Terminos, frases entre comillas, titulo, metadatos y cuerpo. Abre un resultado para leer el archivo y sus metadatos, sin descargarlo.</p>
+  <h1>Buscar</h1>
+  <p class="lede">Titulo, autor, etiquetas o contenido del documento.</p>
 </section>
 
-<form class="panel search-panel glow-panel" [formGroup]="form" (ngSubmit)="submit(0)">
+<form class="panel search-panel" [formGroup]="form" (ngSubmit)="submit(0)">
   <div class="search-bar">
-    <span class="search-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.2" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    </span>
-    <input formControlName="q" placeholder='por ejemplo: "guia de arquitectura" microservicios' aria-label="Consulta">
+    <input formControlName="q" placeholder="Escribe una consulta" aria-label="Consulta">
     <button class="primary" type="submit">Buscar</button>
   </div>
   <div class="filters">
-    <input formControlName="categoria" placeholder="Filtrar categoria" aria-label="Categoria">
-    <input formControlName="etiqueta" placeholder="Filtrar etiqueta" aria-label="Etiqueta">
+    <input formControlName="categoria" placeholder="Categoria" aria-label="Categoria">
+    <input formControlName="etiqueta" placeholder="Etiqueta" aria-label="Etiqueta">
   </div>
 </form>
 
@@ -37,9 +33,7 @@
     }
   </div>
   @if (result.results.length === 0) {
-    <div class="empty-card">
-      <p class="empty">No hay documentos indexados para esa consulta. Carga uno y espera el estado INDEXADO.</p>
-    </div>
+    <p class="empty">No hay documentos para esa consulta.</p>
   }
   @for (hit of result.results; track hit.id) {
     <article class="panel result">
@@ -55,7 +49,7 @@
           <p [innerHTML]="html(fragment)"></p>
         }
       </div>
-      <a class="ghost result-open" [routerLink]="['/documentos', hit.id]">Leer documento</a>
+      <a class="ghost result-open" [routerLink]="['/documentos', hit.id]">Abrir</a>
     </article>
   }
   <div class="pager">
