@@ -1,4 +1,4 @@
-<a class="back" routerLink="/buscar">Volver</a>
+<a class="back" routerLink="/buscar">Volver a la busqueda</a>
 
 @if (error(); as message) {
   <p class="error">{{ message }}</p>
@@ -12,6 +12,7 @@
 
 @if (document(); as doc) {
   <section class="viewer-head">
+    <p class="kicker">Documento</p>
     <div class="title-row">
       <h1>{{ doc.titulo }}</h1>
       <span class="badge" [class.PROCESANDO]="doc.estado === 'PROCESANDO'" [class.INDEXADO]="doc.estado === 'INDEXADO'" [class.ERROR]="doc.estado === 'ERROR'">{{ doc.estado }}</span>

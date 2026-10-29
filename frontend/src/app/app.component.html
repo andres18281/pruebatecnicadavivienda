@@ -1,14 +1,25 @@
 <div class="shell">
   <aside class="rail">
-    <a class="brand" routerLink="/cargar">
-      <span class="brand-mark" aria-hidden="true">TD</span>
-      <strong>TechDocs</strong>
-    </a>
+    <div class="rail-top">
+      <a class="brand" routerLink="/cargar">
+        <span class="brand-mark" aria-hidden="true">TD</span>
+        <span class="brand-copy">
+          <strong>TechDocs</strong>
+          <small>Biblioteca tecnica</small>
+        </span>
+      </a>
 
-    <nav>
-      <a routerLink="/cargar" routerLinkActive="active">Cargar</a>
-      <a routerLink="/buscar" routerLinkActive="active">Buscar</a>
-    </nav>
+      <nav>
+        <a routerLink="/buscar" routerLinkActive="active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>
+          Buscar
+        </a>
+        <a routerLink="/cargar" routerLinkActive="active">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V5"/><path d="M8 8l4-4 4 4"/><path d="M5 19h14"/></svg>
+          Cargar
+        </a>
+      </nav>
+    </div>
 
     <p class="live">
       <span class="dot" [class.on]="notifications.connected()"></span>

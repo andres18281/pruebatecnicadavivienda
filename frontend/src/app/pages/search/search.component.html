@@ -1,11 +1,13 @@
 <section class="page-head">
-  <h1>Buscar</h1>
-  <p class="lede">Titulo, autor, etiquetas o contenido del documento.</p>
+  <p class="kicker">Biblioteca</p>
+  <h1>Buscar documentacion</h1>
+  <p class="lede">Titulo, autor, etiquetas o el contenido del documento.</p>
 </section>
 
 <form class="panel search-panel" [formGroup]="form" (ngSubmit)="submit(0)">
   <div class="search-bar">
-    <input formControlName="q" placeholder="Escribe una consulta" aria-label="Consulta">
+    <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>
+    <input formControlName="q" placeholder="Que quieres encontrar?" aria-label="Consulta">
     <button class="primary" type="submit">Buscar</button>
   </div>
   <div class="filters">
@@ -33,25 +35,27 @@
     }
   </div>
   @if (result.results.length === 0) {
-    <p class="empty">No hay documentos para esa consulta.</p>
+    <p class="empty panel">No hay documentos para esa consulta.</p>
   }
-  @for (hit of result.results; track hit.id) {
-    <article class="panel result">
-      <h2><a [routerLink]="['/documentos', hit.id]" [innerHTML]="html(hit.tituloResaltado || hit.titulo)"></a></h2>
-      <p class="meta">
-        {{ hit.autor }}
-        @if (hit.categoria) { · {{ hit.categoria }} }
-        @if (hit.version) { · v{{ hit.version }} }
-        @if (hit.nombreArchivo) { · {{ hit.nombreArchivo }} }
-      </p>
-      <div class="fragments">
-        @for (fragment of hit.fragmentos; track fragment) {
-          <p [innerHTML]="html(fragment)"></p>
-        }
-      </div>
-      <a class="ghost result-open" [routerLink]="['/documentos', hit.id]">Abrir</a>
-    </article>
-  }
+  <div class="results">
+    @for (hit of result.results; track hit.id) {
+      <article class="panel result">
+        <h2><a [routerLink]="['/documentos', hit.id]" [innerHTML]="html(hit.tituloResaltado || hit.titulo)"></a></h2>
+        <p class="meta">
+          {{ hit.autor }}
+          @if (hit.categoria) { · {{ hit.categoria }} }
+          @if (hit.version) { · v{{ hit.version }} }
+          @if (hit.nombreArchivo) { · {{ hit.nombreArchivo }} }
+        </p>
+        <div class="fragments">
+          @for (fragment of hit.fragmentos; track fragment) {
+            <p [innerHTML]="html(fragment)"></p>
+          }
+        </div>
+        <a class="ghost result-open" [routerLink]="['/documentos', hit.id]">Abrir documento</a>
+      </article>
+    }
+  </div>
   <div class="pager">
     <button class="ghost" type="button" [disabled]="result.page === 0" (click)="submit(result.page - 1)">Anterior</button>
     <span>Pagina {{ result.page + 1 }}</span>

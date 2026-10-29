@@ -1,6 +1,7 @@
 <section class="page-head">
+  <p class="kicker">Ingesta</p>
   <h1>Cargar documento</h1>
-  <p class="lede">TXT, Markdown o PDF. Maximo 10 MB.</p>
+  <p class="lede">TXT, Markdown o PDF. Maximo 10 MB. La indexacion avanza en segundo plano.</p>
 </section>
 
 <div class="grid">
@@ -14,6 +15,9 @@
       (drop)="drop($event)"
     >
       <input type="file" accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" (change)="pick($event)">
+      <span class="drop-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 16V5"/><path d="M8 8l4-4 4 4"/><path d="M4 19h16"/></svg>
+      </span>
       @if (file(); as selected) {
         <span>
           <strong>{{ selected.name }}</strong>
@@ -28,16 +32,16 @@
     </label>
 
     <div class="fields">
-      <label class="wide">Titulo<input formControlName="titulo" maxlength="300"></label>
-      <label>Autor<input formControlName="autor" maxlength="200"></label>
-      <label>Categoria<input formControlName="categoria" maxlength="100"></label>
+      <label class="wide">Titulo<input formControlName="titulo" maxlength="300" placeholder="Nombre del documento"></label>
+      <label>Autor<input formControlName="autor" maxlength="200" placeholder="Quien lo escribio"></label>
+      <label>Categoria<input formControlName="categoria" maxlength="100" placeholder="Arquitectura, API..."></label>
       <label>Version<input formControlName="version" maxlength="50"></label>
       <label class="wide">Etiquetas<input formControlName="etiquetas" placeholder="separadas por coma"></label>
     </div>
 
     <div class="actions">
       <button class="primary" type="submit" [disabled]="sending()">
-        {{ sending() ? 'Enviando...' : 'Cargar' }}
+        {{ sending() ? 'Enviando...' : 'Cargar documento' }}
       </button>
     </div>
     @if (error(); as message) {
@@ -47,11 +51,11 @@
 
   <section class="panel feed">
     <div class="panel-head">
-      <h2>Cargas</h2>
+      <h2>Actividad</h2>
       <span class="count">{{ notifications.uploads().length }}</span>
     </div>
     @if (notifications.uploads().length === 0) {
-      <p class="empty">No hay cargas en esta sesion.</p>
+      <p class="empty">Las cargas de esta sesion aparecen aqui, con el avance de la indexacion.</p>
     }
     @for (item of notifications.uploads(); track item.id) {
       <article class="card">
