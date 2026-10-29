@@ -86,3 +86,29 @@ groups:
         labels: { severity: warning }
         annotations:
           summary: "Hay documentos en estado ERROR"
+
+      - alert: MinioDiscoAlto
+        expr: techdocs:minio:disk_used_ratio > 0.85
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "MinIO usa mas del 85% del disco usable"
+
+      - alert: ElasticsearchDiscoAlto
+        expr: techdocs:es:disk_used_ratio > 0.85
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Elasticsearch usa mas del 85% del disco de datos"
+
+      - alert: ContenedorRamAlta
+        expr: |
+          (
+            container_memory_working_set_bytes{compose_service!=""}
+            / container_spec_memory_limit_bytes{compose_service!=""}
+          ) > 0.9
+          and container_spec_memory_limit_bytes{compose_service!=""} < 1e15
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "El contenedor {{ $labels.compose_service }} supera el 90% de su limite de RAM"

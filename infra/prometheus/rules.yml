@@ -32,3 +32,33 @@ groups:
         expr: sum by (service) (jvm_memory_used_bytes{area="heap"})
       - record: techdocs:jvm:cpu_usage
         expr: process_cpu_usage
+      - record: techdocs:ram:container_bytes
+        expr: sum by (compose_service) (container_memory_working_set_bytes{compose_service!=""})
+      - record: techdocs:ram:container_total_bytes
+        expr: sum(container_memory_working_set_bytes{compose_service!=""})
+      - record: techdocs:minio:used_bytes
+        expr: minio_cluster_usage_total_bytes
+      - record: techdocs:minio:usable_bytes
+        expr: minio_cluster_capacity_usable_total_bytes
+      - record: techdocs:minio:free_bytes
+        expr: minio_cluster_capacity_usable_free_bytes
+      - record: techdocs:minio:disk_used_ratio
+        expr: |
+          1 - (
+            minio_cluster_capacity_usable_free_bytes
+            /
+            clamp_min(minio_cluster_capacity_usable_total_bytes, 1)
+          )
+      - record: techdocs:es:disk_used_bytes
+        expr: elasticsearch_filesystem_data_size_bytes - elasticsearch_filesystem_data_available_bytes
+      - record: techdocs:es:disk_used_ratio
+        expr: |
+          1 - (
+            elasticsearch_filesystem_data_available_bytes
+            /
+            clamp_min(elasticsearch_filesystem_data_size_bytes, 1)
+          )
+      - record: techdocs:pg:checkpoints_per_second
+        expr: |
+          rate(pg_stat_bgwriter_checkpoints_timed_total[5m])
+          + rate(pg_stat_bgwriter_checkpoints_req_total[5m])

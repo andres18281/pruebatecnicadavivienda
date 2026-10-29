@@ -3,7 +3,7 @@
   "title": "TechDocs · Elasticsearch",
   "tags": ["techdocs", "elasticsearch"],
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "10s",
   "timezone": "browser",
   "graphTooltip": 1,
@@ -201,6 +201,157 @@
         }
       },
       "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Disco usado",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "techdocs:es:disk_used_bytes" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 12,
+      "type": "gauge",
+      "title": "Disco ocupado",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "techdocs:es:disk_used_ratio" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.7 },
+              { "color": "red", "value": 0.85 }
+            ]
+          }
+        }
+      },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "Tamano de indices",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum(elasticsearch_indices_store_size_bytes)" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "semi-dark-blue", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "RAM OS del nodo",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 29 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "elasticsearch_os_mem_used_bytes" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1500000000 },
+              { "color": "red", "value": 1800000000 }
+            ]
+          }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Disco de datos (usado vs disponible)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "techdocs:es:disk_used_bytes", "legendFormat": "usado" },
+        { "refId": "B", "expr": "elasticsearch_filesystem_data_available_bytes", "legendFormat": "libre" },
+        { "refId": "C", "expr": "elasticsearch_filesystem_data_size_bytes", "legendFormat": "total" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "RAM Elasticsearch (OS + heap + contenedor)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "elasticsearch_os_mem_used_bytes", "legendFormat": "OS used" },
+        { "refId": "B", "expr": "sum(elasticsearch_jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "heap" },
+        { "refId": "C", "expr": "techdocs:ram:container_bytes{compose_service=\"elasticsearch\"}", "legendFormat": "cAdvisor" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "GC (tiempo acumulado)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "rate(elasticsearch_jvm_gc_collection_seconds_sum[5m])", "legendFormat": "{{gc}}" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 25, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 18,
+      "type": "bargauge",
+      "title": "Store por indice",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 41 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "elasticsearch_indices_store_size_bytes", "legendFormat": "{{index}}" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "continuous-BlPu" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] }, "showUnfilled": true }
     }
   ]
 }

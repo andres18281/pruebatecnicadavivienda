@@ -1,0 +1,245 @@
+{
+  "uid": "techdocs-minio",
+  "title": "TechDocs · MinIO",
+  "tags": ["techdocs", "minio", "storage"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "timezone": "browser",
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Objetos almacenados",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "techdocs:minio:used_bytes" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "semi-dark-orange", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Disco usable",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "techdocs:minio:usable_bytes" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Disco libre",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "techdocs:minio:free_bytes" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 50000000000 },
+              { "color": "green", "value": 200000000000 }
+            ]
+          }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "Disco ocupado",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "techdocs:minio:disk_used_ratio" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.7 },
+              { "color": "red", "value": 0.85 }
+            ]
+          }
+        }
+      },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Objetos en documents",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "minio_bucket_usage_object_total{bucket=\"documents\"}" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "RAM proceso MinIO",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "minio_node_process_resident_memory_bytes" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 500000000 },
+              { "color": "red", "value": 1000000000 }
+            ]
+          }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Espacio del cluster (usado / libre / total)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "techdocs:minio:used_bytes", "legendFormat": "objetos" },
+        { "refId": "B", "expr": "techdocs:minio:free_bytes", "legendFormat": "disco libre" },
+        { "refId": "C", "expr": "techdocs:minio:usable_bytes", "legendFormat": "disco usable" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Tamano del bucket documents",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "minio_bucket_usage_total_bytes{bucket=\"documents\"}", "legendFormat": "documents" },
+        { "refId": "B", "expr": "minio_cluster_usage_total_bytes", "legendFormat": "cluster" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 30, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Trafico S3",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "rate(minio_s3_traffic_received_bytes[5m])", "legendFormat": "recibido" },
+        { "refId": "B", "expr": "rate(minio_s3_traffic_sent_bytes[5m])", "legendFormat": "enviado" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 25, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Requests S3 / s",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "sum by (api) (rate(minio_s3_requests_total[5m]))", "legendFormat": "{{api}}" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 11,
+      "type": "piechart",
+      "title": "Distribucion de tamanos (documents)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "minio_bucket_objects_size_distribution{bucket=\"documents\"}", "legendFormat": "{{range}}" }],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" }
+      },
+      "options": {
+        "pieType": "donut",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"], "showLegend": true },
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "RAM MinIO (proceso y contenedor)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "refId": "A", "expr": "minio_node_process_resident_memory_bytes", "legendFormat": "proceso" },
+        { "refId": "B", "expr": "techdocs:ram:container_bytes{compose_service=\"minio\"}", "legendFormat": "contenedor" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 25, "gradientMode": "scheme", "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } }
+    }
+  ]
+}
