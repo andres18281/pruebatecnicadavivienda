@@ -2,39 +2,39 @@
 
 Plataforma de carga, indexación y búsqueda de documentación técnica. El rango de 400 ms a 1 s se trata como SLA de latencia máxima: la búsqueda debe responder con p95 menor o igual a 1 s. Elasticsearch suele quedar por debajo de 400 ms; Prometheus alerta si el p95 supera 1 s.
 
-El detalle de despliegue está en `docs/arquitectura-plataforma-documentacion-tecnica.md`. Este documento cubre el flujo, las decisiones, el tiempo real y la escalabilidad.
+El detalle de despliegue está en `docs/arquitectura-plataforma-documentacion-tecnica.md`. Este documento cubre el flujo, la separación de redes, las decisiones, el tiempo real y la escalabilidad.
 
 ## 1. Diagrama de arquitectura y flujo
 
-El navegador solo habla con Nginx. La búsqueda no comparte proceso con la carga. El aviso de estado no usa polling: RabbitMQ publica y el WebSocket empuja.
+Cada servicio es un proceso aparte. Entre ellos comparten redes internas de Docker, sin puerto publicado. La única salida pública es Nginx: el navegador carga el frontend y habla con la API solo a través de esa puerta de enlace.
 
 ```mermaid
-flowchart LR
-    U[Usuario]
+flowchart TB
+    U[Navegador]
 
-    subgraph edge [Borde]
-        GW[Nginx gateway]
+    subgraph edge [Red edge: unica salida publica]
+        GW[Nginx puerta de enlace]
     end
 
-    subgraph app [Aplicacion]
+    subgraph app [app-net interna]
         FE[Frontend Angular]
         DOC[document-service]
         SRCH[search-service]
-        WRK[processing-worker]
         NOTI[notification-service]
     end
 
-    subgraph data [Datos]
+    subgraph data [data-net interna]
+        WRK[processing-worker]
         PG[(PostgreSQL)]
         ES[(Elasticsearch)]
         S3[(MinIO)]
         MQ{{RabbitMQ}}
     end
 
-    U -->|HTTP y WebSocket| GW
-    GW --> FE
-    GW -->|POST /api/v1/documents| DOC
-    GW -->|GET /api/v1/search| SRCH
+    U -->|HTTP y WebSocket en el puerto 8080| GW
+    GW -->|sirve la interfaz| FE
+    GW -->|/api/v1/documents| DOC
+    GW -->|/api/v1/search| SRCH
     GW -->|/ws| NOTI
 
     DOC --> S3
@@ -49,7 +49,6 @@ flowchart LR
     WRK --> PG
     WRK -->|document.progress y document.status.changed| MQ
     MQ --> NOTI
-    NOTI -->|push| U
 ```
 
 Flujo de una carga hasta que el documento se puede buscar:
@@ -90,7 +89,17 @@ sequenceDiagram
     SRCH-->>U: pagina, highlights y total
 ```
 
-## 2. Justificación de decisiones
+## 2. Separación de servicios y frontera de red
+
+La plataforma no es un solo proceso con módulos. Carga, búsqueda, procesamiento, aviso en tiempo real y telemetría son contenedores distintos, con su propio ciclo de vida. Un fallo o un pico en la indexación no comparte memoria con la consulta que debe responder en menos de un segundo.
+
+Esos contenedores sí comparten red, pero es una red privada. `app-net`, `data-net` y `obs-net` están declaradas con `internal: true`: no tienen salida a internet y ningún servicio de esas redes publica un puerto al host. Dentro de ellas se resuelven por nombre de Docker (`postgres`, `elasticsearch`, `rabbitmq`, `minio`) y ahí circula la información que no debe salir: URLs con usuario y contraseña, el archivo en el bucket, el texto extraído, los eventos del outbox y las métricas. El worker ni siquiera está en `app-net`; solo ve `data-net`, así que la puerta de enlace no tiene ruta hacia el proceso que parsea PDF.
+
+La salida pública es una sola. Nginx vive en la red `edge` y es el único componente de la aplicación que publica un puerto (`8080`). El frontend Angular no tiene puerto en el host: permanece en `app-net` y se vuelve visible porque Nginx lo sirve. El navegador no elige a qué servicio conectarse. Pide la interfaz, `/api/v1/documents`, `/api/v1/search` o `/ws`, y la puerta de enlace es quien cruza de la red pública a la red interna.
+
+Ese cruce es la estrategia de seguridad. Los servicios comparten secretos y estado entre ellos, en la red interna. Nginx es el único punto donde una parte de ese trabajo privado se entrega hacia afuera, y solo en las rutas que el gateway define: la página, la API de documentos, la búsqueda y el WebSocket. Ahí se aplican el rate limit, el tope de cuerpo, los timeouts y las cabeceras (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`). Las credenciales de PostgreSQL, Elasticsearch, RabbitMQ y MinIO no viajan en esa respuesta. Grafana también está en `edge`, pero su puerto queda atado a `127.0.0.1`.
+
+## 3. Justificación de decisiones
 
 | Pieza | Elección | Por qué cumple el SLA |
 |---|---|---|
@@ -101,7 +110,7 @@ sequenceDiagram
 | Timeout de búsqueda | 900 ms en la query y 2 s en Nginx | Si el motor se acerca al segundo, corta y puede devolver resultados parciales marcados. La alerta de Prometheus usa el p95 de `/api/v1/search`. |
 | Archivos | MinIO compatible con S3 | El binario no entra en PostgreSQL ni en Elasticsearch. El índice solo guarda el texto extraído. |
 | Mensajería | RabbitMQ | Desacopla la carga del procesamiento. Reintento a los 30 s y dead letter después de 3 fallos. |
-| Borde | Nginx | Rate limit distinto para búsqueda, carga y WebSocket. El p95 de búsqueda no se diluye con subidas de 10 MB. |
+| Borde | Nginx en la red `edge` | Única salida pública. Traduce la red interna al navegador y aplica rate limit distinto para búsqueda, carga y WebSocket. |
 | Resiliencia | Circuit breaker Resilience4j | Si Elasticsearch o MinIO fallan, la búsqueda y la carga responden `503` sin agotar el timeout. El worker reencola sin gastar los 3 reintentos mientras el circuito está abierto. |
 | Interior de cada servicio | Puertos y adaptadores | El dominio no depende de Spring, Elasticsearch, RabbitMQ ni MinIO. |
 
@@ -109,7 +118,7 @@ PostgreSQL se eligió para el estado porque la carga necesita transacciones: el 
 
 Elasticsearch se eligió para la búsqueda porque un `LIKE` o un índice GIN sobre el cuerpo no sostiene highlighting, analizador en español y p95 menor a 1 s cuando el corpus crece. La consulta usa `simple_query_string` con pesos (`titulo^3`, `etiquetas^2`) y filtra `estado = INDEXADO`, así un documento a medio procesar no aparece.
 
-## 3. Estrategia de tiempo real
+## 4. Estrategia de tiempo real
 
 El mecanismo es publicación y suscripción sobre RabbitMQ, con WebSocket como canal hacia el navegador. No hay Server-Sent Events ni polling de estado en el camino feliz.
 
@@ -121,7 +130,7 @@ El mecanismo es publicación y suscripción sobre RabbitMQ, con WebSocket como c
 
 El evento de estado se inserta en el outbox dentro de la misma transacción que el cambio en PostgreSQL. Así el WebSocket no puede anunciar `INDEXADO` si la base no confirmó el cambio, y un fallo de RabbitMQ no pierde el evento.
 
-## 4. Escalabilidad ante un incremento masivo de documentos
+## 5. Escalabilidad ante un incremento masivo de documentos
 
 La carga y la búsqueda escalan por caminos distintos.
 
