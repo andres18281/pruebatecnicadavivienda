@@ -67,3 +67,9 @@ groups:
         expr: |
           rate(pg_stat_bgwriter_checkpoints_timed_total[5m])
           + rate(pg_stat_bgwriter_checkpoints_req_total[5m])
+      - record: techdocs:container:running
+        expr: count(docker_container_memory_usage_total_bytes{compose_project="tech-docs-platform"})
+      - record: techdocs:container:cpu_ratio
+        expr: sum by (compose_service) (docker_container_cpu_utilization_ratio{compose_project="tech-docs-platform"})
+      - record: techdocs:container:memory_bytes
+        expr: sum by (compose_service) (docker_container_memory_usage_total_bytes{compose_project="tech-docs-platform"})
