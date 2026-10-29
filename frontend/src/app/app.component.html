@@ -1,0 +1,34 @@
+<div class="shell">
+  <aside class="rail">
+    <a class="brand" routerLink="/cargar">
+      <span class="brand-mark" aria-hidden="true">TD</span>
+      <strong>TechDocs</strong>
+    </a>
+
+    <nav>
+      <a routerLink="/cargar" routerLinkActive="active">Cargar</a>
+      <a routerLink="/buscar" routerLinkActive="active">Buscar</a>
+    </nav>
+
+    <p class="live">
+      <span class="dot" [class.on]="notifications.connected()"></span>
+      {{ notifications.connected() ? 'En linea' : 'Reconectando' }}
+    </p>
+  </aside>
+
+  <main>
+    <router-outlet />
+  </main>
+</div>
+
+<div class="toasts" aria-live="polite">
+  @for (toast of notifications.toasts(); track toast.id) {
+    <button type="button" class="toast" [class.error]="toast.estado === 'ERROR'" (click)="open(toast.documentId); notifications.dismiss(toast.id)">
+      <strong>{{ toast.estado === 'INDEXADO' ? 'Indexado' : 'Error al indexar' }}</strong>
+      <span>{{ toast.titulo }}</span>
+      @if (toast.error) {
+        <small>{{ toast.error }}</small>
+      }
+    </button>
+  }
+</div>

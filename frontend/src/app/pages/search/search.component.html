@@ -1,0 +1,60 @@
+<section class="page-head">
+  <h1>Buscar</h1>
+  <p class="lede">Titulo, autor, etiquetas o contenido del documento.</p>
+</section>
+
+<form class="panel search-panel" [formGroup]="form" (ngSubmit)="submit(0)">
+  <div class="search-bar">
+    <input formControlName="q" placeholder="Escribe una consulta" aria-label="Consulta">
+    <button class="primary" type="submit">Buscar</button>
+  </div>
+  <div class="filters">
+    <input formControlName="categoria" placeholder="Categoria" aria-label="Categoria">
+    <input formControlName="etiqueta" placeholder="Etiqueta" aria-label="Etiqueta">
+  </div>
+</form>
+
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+@if (loading()) {
+  <div class="skeleton" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+}
+@if (page(); as result) {
+  <div class="sla-row">
+    <p class="sla">{{ result.total }} resultados</p>
+    <span class="latency" [class.hot]="result.tookMs >= 400" [class.warn]="result.tookMs >= 1000">
+      {{ result.tookMs }} ms
+    </span>
+    @if (result.timedOut) {
+      <span class="chip-warn">parcial por tiempo</span>
+    }
+  </div>
+  @if (result.results.length === 0) {
+    <p class="empty">No hay documentos para esa consulta.</p>
+  }
+  @for (hit of result.results; track hit.id) {
+    <article class="panel result">
+      <h2><a [routerLink]="['/documentos', hit.id]" [innerHTML]="html(hit.tituloResaltado || hit.titulo)"></a></h2>
+      <p class="meta">
+        {{ hit.autor }}
+        @if (hit.categoria) { · {{ hit.categoria }} }
+        @if (hit.version) { · v{{ hit.version }} }
+        @if (hit.nombreArchivo) { · {{ hit.nombreArchivo }} }
+      </p>
+      <div class="fragments">
+        @for (fragment of hit.fragmentos; track fragment) {
+          <p [innerHTML]="html(fragment)"></p>
+        }
+      </div>
+      <a class="ghost result-open" [routerLink]="['/documentos', hit.id]">Abrir</a>
+    </article>
+  }
+  <div class="pager">
+    <button class="ghost" type="button" [disabled]="result.page === 0" (click)="submit(result.page - 1)">Anterior</button>
+    <span>Pagina {{ result.page + 1 }}</span>
+    <button class="ghost" type="button" [disabled]="(result.page + 1) * result.size >= result.total" (click)="submit(result.page + 1)">Siguiente</button>
+  </div>
+}

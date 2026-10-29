@@ -5,14 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.techdocs.document.application.commands.BatchUploadCommand;
 import com.techdocs.document.application.commands.UploadCommand;
 import com.techdocs.document.application.ports.in.GetDocumentDetailUseCase;
+import com.techdocs.document.application.ports.in.GetDocumentFileUseCase;
 import com.techdocs.document.application.ports.in.GetDocumentStatusUseCase;
 import com.techdocs.document.application.ports.in.UploadBatchUseCase;
 import com.techdocs.document.application.ports.in.UploadDocumentUseCase;
 import com.techdocs.document.application.views.BatchReceipt;
 import com.techdocs.document.application.views.DocumentDetail;
+import com.techdocs.document.application.views.DocumentFile;
 import com.techdocs.document.application.views.StatusView;
 import com.techdocs.document.application.views.UploadReceipt;
 import com.techdocs.document.domain.errors.DomainException;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +44,7 @@ public class DocumentController {
     private final UploadDocumentUseCase uploadDocument;
     private final UploadBatchUseCase uploadBatch;
     private final GetDocumentDetailUseCase detail;
+    private final GetDocumentFileUseCase file;
     private final GetDocumentStatusUseCase status;
     private final ObjectMapper objectMapper;
 
@@ -46,12 +52,14 @@ public class DocumentController {
             UploadDocumentUseCase uploadDocument,
             UploadBatchUseCase uploadBatch,
             GetDocumentDetailUseCase detail,
+            GetDocumentFileUseCase file,
             GetDocumentStatusUseCase status,
             ObjectMapper objectMapper
     ) {
         this.uploadDocument = uploadDocument;
         this.uploadBatch = uploadBatch;
         this.detail = detail;
+        this.file = file;
         this.status = status;
         this.objectMapper = objectMapper;
     }
@@ -93,6 +101,20 @@ public class DocumentController {
     @GetMapping("/{id}")
     public DocumentDetail get(@PathVariable UUID id) {
         return detail.execute(id);
+    }
+
+    @GetMapping("/{id}/file")
+    public ResponseEntity<byte[]> file(@PathVariable UUID id) {
+        DocumentFile document = file.execute(id);
+        MediaType mediaType = MediaType.parseMediaType(document.mimeType());
+        ContentDisposition disposition = ContentDisposition.inline()
+                .filename(document.nombreArchivo(), StandardCharsets.UTF_8)
+                .build();
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .header(HttpHeaders.CACHE_CONTROL, "private, max-age=60")
+                .body(document.content());
     }
 
     @GetMapping("/{id}/status")

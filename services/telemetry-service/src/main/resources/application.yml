@@ -1,0 +1,33 @@
+server:
+  port: ${PORT:8080}
+  tomcat:
+    basedir: /tmp
+
+spring:
+  application:
+    name: telemetry-service
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  rabbitmq:
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 20
+        default-requeue-rejected: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+      base-path: /
+      path-mapping:
+        prometheus: metrics
+  metrics:
+    tags:
+      service: telemetry-service
+
+logging:
+  pattern:
+    console: '{"time":"%d{yyyy-MM-dd''T''HH:mm:ss.SSS}","level":"%level","service":"telemetry-service","message":"%m"}%n'

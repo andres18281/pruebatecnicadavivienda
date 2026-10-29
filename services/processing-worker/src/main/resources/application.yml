@@ -32,6 +32,9 @@ management:
 
 app:
   max-retries: ${MAX_RETRIES:3}
+  circuit-breaker:
+    elasticsearch-slow-call: 15s
+    minio-slow-call: 10s
 
 logging:
   pattern:

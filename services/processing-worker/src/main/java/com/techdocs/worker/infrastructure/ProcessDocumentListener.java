@@ -2,6 +2,7 @@ package com.techdocs.worker.infrastructure;
 
 import com.rabbitmq.client.Channel;
 import com.techdocs.contracts.DocumentProcessCommand;
+import com.techdocs.resilience.OpenCircuitException;
 import com.techdocs.worker.application.ProcessDocumentService;
 import com.techdocs.worker.domain.RetryDecision;
 import org.slf4j.Logger;
@@ -48,6 +49,16 @@ public class ProcessDocumentListener {
         int previousFailures = attempts(message);
         try {
             service.process(command);
+            channel.basicAck(deliveryTag, false);
+        } catch (OpenCircuitException exception) {
+            log.warn("Circuito abierto ({}) al procesar {}: {}", exception.dependency(), command.documentId(), exception.getMessage());
+            try {
+                republish(message, previousFailures);
+            } catch (RuntimeException secondary) {
+                log.error("No se pudo reencolar {}", command.documentId(), secondary);
+                channel.basicNack(deliveryTag, false, false);
+                return;
+            }
             channel.basicAck(deliveryTag, false);
         } catch (Exception exception) {
             boolean handled = false;

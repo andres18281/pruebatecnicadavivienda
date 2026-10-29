@@ -1,0 +1,77 @@
+<section class="page-head">
+  <h1>Cargar documento</h1>
+  <p class="lede">TXT, Markdown o PDF. Maximo 10 MB.</p>
+</section>
+
+<div class="grid">
+  <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+    <label
+      class="drop"
+      [class.ready]="file()"
+      [class.over]="over()"
+      (dragover)="onOver($event, true)"
+      (dragleave)="onOver($event, false)"
+      (drop)="drop($event)"
+    >
+      <input type="file" accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" (change)="pick($event)">
+      @if (file(); as selected) {
+        <span>
+          <strong>{{ selected.name }}</strong>
+          <span>{{ size(selected.size) }}</span>
+        </span>
+      } @else {
+        <span>
+          <strong>Arrastra el archivo o haz clic para seleccionarlo</strong>
+          <span>.txt · .md · .pdf</span>
+        </span>
+      }
+    </label>
+
+    <div class="fields">
+      <label class="wide">Titulo<input formControlName="titulo" maxlength="300"></label>
+      <label>Autor<input formControlName="autor" maxlength="200"></label>
+      <label>Categoria<input formControlName="categoria" maxlength="100"></label>
+      <label>Version<input formControlName="version" maxlength="50"></label>
+      <label class="wide">Etiquetas<input formControlName="etiquetas" placeholder="separadas por coma"></label>
+    </div>
+
+    <div class="actions">
+      <button class="primary" type="submit" [disabled]="sending()">
+        {{ sending() ? 'Enviando...' : 'Cargar' }}
+      </button>
+    </div>
+    @if (error(); as message) {
+      <p class="error">{{ message }}</p>
+    }
+  </form>
+
+  <section class="panel feed">
+    <div class="panel-head">
+      <h2>Cargas</h2>
+      <span class="count">{{ notifications.uploads().length }}</span>
+    </div>
+    @if (notifications.uploads().length === 0) {
+      <p class="empty">No hay cargas en esta sesion.</p>
+    }
+    @for (item of notifications.uploads(); track item.id) {
+      <article class="card">
+        <span class="badge" [class.PROCESANDO]="item.estado === 'PROCESANDO'" [class.INDEXADO]="item.estado === 'INDEXADO'" [class.ERROR]="item.estado === 'ERROR'">{{ item.estado }}</span>
+        @if (item.estado === 'INDEXADO') {
+          <a [routerLink]="['/documentos', item.id]">{{ item.titulo }}</a>
+        } @else {
+          <strong>{{ item.titulo }}</strong>
+        }
+        <span class="meta">{{ item.nombreArchivo }}</span>
+        @if (item.estado === 'PROCESANDO' || item.percent > 0) {
+          <div class="progress" role="progressbar" [attr.aria-valuenow]="item.percent" aria-valuemin="0" aria-valuemax="100">
+            <span class="progress-fill" [class.done]="item.estado === 'INDEXADO'" [class.fail]="item.estado === 'ERROR'" [style.width.%]="item.percent"></span>
+          </div>
+          <span class="meta progress-label">{{ item.label || 'Procesando...' }} · {{ item.percent }}%</span>
+        }
+        @if (item.error) {
+          <span class="meta warn">{{ item.error }}</span>
+        }
+      </article>
+    }
+  </section>
+</div>

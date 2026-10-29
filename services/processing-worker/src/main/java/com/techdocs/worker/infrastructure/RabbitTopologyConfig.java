@@ -22,6 +22,7 @@ public class RabbitTopologyConfig {
     public static final String DLQ = "documents.process.dlq";
     public static final String PROCESS_KEY = "document.process";
     public static final String STATUS_KEY = "document.status.changed";
+    public static final String PROGRESS_KEY = "document.progress";
 
     @Bean
     Declarables documentTopology() {

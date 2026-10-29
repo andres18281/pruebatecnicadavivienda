@@ -21,6 +21,7 @@ public class RabbitTopologyConfig {
     public static final String RETRY_QUEUE = "documents.process.retry";
     public static final String DLQ = "documents.process.dlq";
     public static final String PROCESS_KEY = "document.process";
+    public static final String PROGRESS_KEY = "document.progress";
 
     @Bean
     Declarables documentTopology() {

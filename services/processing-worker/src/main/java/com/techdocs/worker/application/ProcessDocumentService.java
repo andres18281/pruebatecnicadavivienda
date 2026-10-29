@@ -35,8 +35,13 @@ public final class ProcessDocumentService {
             ));
             return;
         }
+        String id = document.id().toString();
+        store.publishProgress(id, "STARTED", 30, "El worker tomo el documento");
         byte[] content = storage.get(command.storageKey());
+        store.publishProgress(id, "STORED", 50, "Archivo leido del almacenamiento");
         String text = extractor.extract(content, document.mimeType(), document.nombreArchivo());
+        store.publishProgress(id, "EXTRACTED", 75, "Texto extraido");
+        store.publishProgress(id, "INDEXING", 90, "Escribiendo en Elasticsearch");
         index.index(document, text);
         store.markIndexed(document);
     }

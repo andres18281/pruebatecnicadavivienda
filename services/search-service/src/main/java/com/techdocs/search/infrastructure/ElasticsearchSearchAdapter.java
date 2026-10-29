@@ -7,13 +7,18 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.techdocs.resilience.CircuitGuard;
+import com.techdocs.resilience.OpenCircuitException;
 import com.techdocs.search.application.SearchCriteria;
+import com.techdocs.search.application.SearchDocumentsService;
 import com.techdocs.search.application.SearchHit;
 import com.techdocs.search.application.SearchIndexPort;
 import com.techdocs.search.application.SearchPage;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,15 +26,33 @@ import java.util.List;
 public class ElasticsearchSearchAdapter implements SearchIndexPort {
 
     private final ElasticsearchClient client;
+    private final CircuitGuard elasticsearch;
     private final String index;
 
-    public ElasticsearchSearchAdapter(ElasticsearchClient client, @Value("${ELASTICSEARCH_INDEX}") String index) {
+    public ElasticsearchSearchAdapter(
+            ElasticsearchClient client,
+            CircuitBreakerRegistry circuitBreakers,
+            @Value("${ELASTICSEARCH_INDEX}") String index
+    ) {
         this.client = client;
+        this.elasticsearch = CircuitGuard.of(circuitBreakers, "elasticsearch");
         this.index = index;
     }
 
     @Override
     public SearchPage search(SearchCriteria criteria) {
+        try {
+            return elasticsearch.call(() -> query(criteria));
+        } catch (OpenCircuitException exception) {
+            throw new SearchUnavailableException("El motor de busqueda no esta disponible.", exception);
+        } catch (SearchDocumentsService.InvalidQueryException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new SearchUnavailableException("El motor de busqueda no respondio.", exception);
+        }
+    }
+
+    private SearchPage query(SearchCriteria criteria) throws IOException {
         try {
             SearchResponse<IndexedDocument> response = client.search(request -> request
                             .index(index)
@@ -81,15 +104,11 @@ public class ElasticsearchSearchAdapter implements SearchIndexPort {
             );
         } catch (ElasticsearchException exception) {
             if (exception.status() == 400) {
-                throw new com.techdocs.search.application.SearchDocumentsService.InvalidQueryException(
+                throw new SearchDocumentsService.InvalidQueryException(
                         "La consulta no es valida para el motor de busqueda."
                 );
             }
-            throw new SearchUnavailableException("El motor de busqueda no respondio.", exception);
-        } catch (SearchDocumentsService.InvalidQueryException exception) {
             throw exception;
-        } catch (Exception exception) {
-            throw new SearchUnavailableException("El motor de busqueda no respondio.", exception);
         }
     }
 

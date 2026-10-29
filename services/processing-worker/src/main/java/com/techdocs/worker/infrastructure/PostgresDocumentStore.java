@@ -2,6 +2,7 @@ package com.techdocs.worker.infrastructure;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.techdocs.contracts.DocumentProgressEvent;
 import com.techdocs.contracts.DocumentStatus;
 import com.techdocs.contracts.DocumentStatusChangedEvent;
 import com.techdocs.worker.application.DocumentStore;
@@ -94,6 +95,16 @@ public class PostgresDocumentStore implements DocumentStore {
     @Override
     public void publishStatus(DocumentStatusChangedEvent event) {
         rabbitTemplate.convertAndSend(RabbitTopologyConfig.EVENTS, RabbitTopologyConfig.STATUS_KEY, event);
+    }
+
+    @Override
+    public void publishProgress(String documentId, String stage, int percent, String label) {
+        try {
+            DocumentProgressEvent event = DocumentProgressEvent.of(documentId, stage, percent, label);
+            rabbitTemplate.convertAndSend(RabbitTopologyConfig.EVENTS, RabbitTopologyConfig.PROGRESS_KEY, event);
+        } catch (RuntimeException exception) {
+            log.debug("No se pudo publicar el progreso {} de {}: {}", stage, documentId, exception.getMessage());
+        }
     }
 
     @Scheduled(fixedDelayString = "5000")
