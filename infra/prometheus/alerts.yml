@@ -87,6 +87,13 @@ groups:
         annotations:
           summary: "Hay documentos en estado ERROR"
 
+      - alert: CircuitBreakerAbierto
+        expr: resilience4j_circuitbreaker_state{state="open"} == 1
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: "Circuit breaker {{ $labels.name }} abierto en {{ $labels.service }}"
+
       - alert: MinioDiscoAlto
         expr: techdocs:minio:disk_used_ratio > 0.85
         for: 10m

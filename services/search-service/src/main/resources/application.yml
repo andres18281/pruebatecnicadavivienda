@@ -25,6 +25,8 @@ management:
 app:
   search-timeout-ms: ${SEARCH_TIMEOUT_MS:900}
   max-page-size: ${SEARCH_MAX_PAGE_SIZE:50}
+  circuit-breaker:
+    elasticsearch-slow-call: 1s
 
 logging:
   pattern:

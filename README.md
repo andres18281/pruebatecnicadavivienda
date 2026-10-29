@@ -31,7 +31,7 @@ docker compose up -d --build
 
 Usuario de Grafana: `admin`. Contrasena: la variable `GRAFANA_ADMIN_PASSWORD`.
 
-Dashboards en la carpeta **TechDocs**: plataforma (SLA, CPU/RAM, colas), PostgreSQL (documentos por estado, outbox, cache) y Elasticsearch (cluster, heap, busquedas). Prometheus alerta si el p95 de busqueda supera 1 s, si Postgres o ES caen, o si hay documentos en `ERROR`.
+Dashboards en la carpeta **TechDocs**: plataforma (SLA, CPU/RAM, colas, circuit breakers), PostgreSQL (documentos por estado, outbox, cache) y Elasticsearch (cluster, heap, busquedas). Prometheus alerta si el p95 de busqueda supera 1 s, si Postgres o ES caen, si un circuit breaker queda abierto, o si hay documentos en `ERROR`.
 
 ## Ejemplo de carga
 
@@ -55,9 +55,9 @@ Carga masiva: `POST /api/v1/documents/batch` con `files` y un campo `manifest` (
 
 ## Servicios
 
-- `document-service`: recibe el archivo, lo guarda en MinIO, persiste el estado en PostgreSQL y publica el comando por el outbox.
-- `processing-worker`: extrae TXT, Markdown o PDF, indexa en Elasticsearch y emite el cambio de estado. Reintenta hasta 3 veces y luego marca `ERROR`.
-- `search-service`: unica ruta de busqueda. Aislada de la carga.
+- `document-service`: recibe el archivo, lo guarda en MinIO, persiste el estado en PostgreSQL y publica el comando por el outbox. MinIO y la lectura de contenido en Elasticsearch pasan por circuit breaker.
+- `processing-worker`: extrae TXT, Markdown o PDF, indexa en Elasticsearch y emite el cambio de estado. Reintenta hasta 3 veces y luego marca `ERROR`. Si el circuito de MinIO o Elasticsearch esta abierto, reencola el documento sin consumir esos reintentos.
+- `search-service`: unica ruta de busqueda. Aislada de la carga. Si Elasticsearch falla o se vuelve lento, el circuito se abre y la API responde `503` sin esperar el timeout.
 - `notification-service`: WebSocket. El cliente se suscribe con `{"action":"subscribe","documentId":"..."}`.
 - `telemetry-service`: consume los eventos `telemetry.log` y `telemetry.trace` y los guarda en PostgreSQL. Se consultan en `GET /api/v1/telemetry/logs` y `GET /api/v1/telemetry/traces`.
 

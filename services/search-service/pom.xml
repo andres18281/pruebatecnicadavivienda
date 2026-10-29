@@ -14,6 +14,10 @@
     <dependencies>
         <dependency>
             <groupId>com.techdocs</groupId>
+            <artifactId>resilience</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.techdocs</groupId>
             <artifactId>telemetry-amqp</artifactId>
         </dependency>
         <dependency>

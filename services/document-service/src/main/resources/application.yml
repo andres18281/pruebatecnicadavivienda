@@ -41,6 +41,9 @@ management:
 
 app:
   max-upload-mb: ${MAX_UPLOAD_MB:10}
+  circuit-breaker:
+    elasticsearch-slow-call: 2s
+    minio-slow-call: 10s
 
 logging:
   pattern:
