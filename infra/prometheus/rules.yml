@@ -73,3 +73,18 @@ groups:
         expr: sum by (compose_service) (docker_container_cpu_utilization_ratio{compose_project="tech-docs-platform"})
       - record: techdocs:container:memory_bytes
         expr: sum by (compose_service) (docker_container_memory_usage_total_bytes{compose_project="tech-docs-platform"})
+      - record: techdocs:queue:process_rate
+        expr: sum(rate(spring_rabbitmq_listener_seconds_count{queue="documents.process"}[1m]))
+      - record: techdocs:queue:process_errors
+        expr: sum(rate(spring_rabbitmq_listener_seconds_count{queue="documents.process",result!="success"}[1m]))
+      - record: techdocs:queue:process_duration_seconds
+        expr: |
+          sum(rate(spring_rabbitmq_listener_seconds_sum{queue="documents.process"}[5m]))
+          /
+          clamp_min(sum(rate(spring_rabbitmq_listener_seconds_count{queue="documents.process"}[5m])), 0.001)
+      - record: techdocs:queue:publish_rate
+        expr: sum(rate(rabbitmq_global_messages_received_total{queue_type="rabbit_classic_queue"}[1m]))
+      - record: techdocs:queue:deliver_rate
+        expr: sum(rate(rabbitmq_global_messages_delivered_total{queue_type="rabbit_classic_queue"}[1m]))
+      - record: techdocs:queue:ack_rate
+        expr: sum(rate(rabbitmq_global_messages_acknowledged_total{queue_type="rabbit_classic_queue"}[1m]))

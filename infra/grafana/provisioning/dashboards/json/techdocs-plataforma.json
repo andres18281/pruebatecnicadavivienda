@@ -72,20 +72,21 @@
     {
       "id": 4,
       "type": "stat",
-      "title": "Cola process",
+      "title": "Cola process / s",
+      "description": "Mensajes que el worker esta consumiendo ahora. El backlog listo se ve en Colas.",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "refId": "A", "expr": "rabbitmq_detailed_queue_messages_ready{queue=\"documents.process\"}", "legendFormat": "ready" }],
+      "targets": [{ "refId": "A", "expr": "techdocs:queue:process_rate", "legendFormat": "process/s" }],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "ops",
+          "decimals": 2,
           "color": { "mode": "thresholds" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 50 },
-              { "color": "red", "value": 500 }
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 0.01 }
             ]
           }
         }
@@ -201,10 +202,14 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Colas RabbitMQ",
+      "title": "Colas: en espera vs procesando",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [{ "refId": "A", "expr": "rabbitmq_detailed_queue_messages", "legendFormat": "{{queue}}" }],
+      "targets": [
+        { "refId": "A", "expr": "rabbitmq_detailed_queue_messages_ready{queue=~\"documents.process.*\"}", "legendFormat": "listos {{queue}}" },
+        { "refId": "B", "expr": "rabbitmq_detailed_queue_messages_unacked{queue=~\"documents.process.*\"}", "legendFormat": "en curso {{queue}}" },
+        { "refId": "C", "expr": "sum by (queue) (rate(spring_rabbitmq_listener_seconds_count{queue=~\"documents.process.*\"}[1m]))", "legendFormat": "consumo/s {{queue}}" }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
