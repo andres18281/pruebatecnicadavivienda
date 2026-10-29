@@ -1,7 +1,7 @@
 <section class="page-head">
   <p class="eyebrow">HU-02 · Full-text</p>
   <h1>Pregunta a la documentacion.</h1>
-  <p class="lede">Terminos, frases entre comillas, titulo, metadatos y cuerpo. El SLA es p95 ≤ 1 s; el resaltado llega con los fragmentos.</p>
+  <p class="lede">Terminos, frases entre comillas, titulo, metadatos y cuerpo. Abre un resultado para leer el archivo y sus metadatos, sin descargarlo.</p>
 </section>
 
 <form class="panel search-panel glow-panel" [formGroup]="form" (ngSubmit)="submit(0)">
@@ -55,6 +55,7 @@
           <p [innerHTML]="html(fragment)"></p>
         }
       </div>
+      <a class="ghost result-open" [routerLink]="['/documentos', hit.id]">Leer documento</a>
     </article>
   }
   <div class="pager">

@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
@@ -26,15 +26,36 @@ export class ViewerComponent {
 
   readonly document = signal<DocumentDetail | null>(null);
   readonly error = signal<string | null>(null);
+  readonly loading = signal(true);
+  readonly tab = signal<'archivo' | 'texto'>('archivo');
+  readonly previewUrl = signal<SafeResourceUrl | null>(null);
+  readonly originalText = signal<string | null>(null);
+  readonly previewError = signal<string | null>(null);
   readonly bytes = formatBytes;
 
+  private objectUrl: string | null = null;
+
   constructor() {
+    this.destroyRef.onDestroy(() => this.revoke());
+
     this.route.paramMap.pipe(
-      switchMap((params) => this.api.detail(params.get('id') ?? '')),
+      switchMap((params) => {
+        this.resetPreview();
+        this.loading.set(true);
+        this.document.set(null);
+        this.error.set(null);
+        return this.api.detail(params.get('id') ?? '');
+      }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: (detail) => this.show(detail),
-      error: (err: { error?: { message?: string } }) => this.error.set(err?.error?.message ?? 'No se encontro el documento.')
+      next: (detail) => {
+        this.show(detail);
+        this.loadOriginal(detail);
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.loading.set(false);
+        this.error.set(err?.error?.message ?? 'No se encontro el documento.');
+      }
     });
 
     this.notifications.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
@@ -62,11 +83,54 @@ export class ViewerComponent {
     return doc.mimeType === 'text/markdown' || doc.nombreArchivo.toLowerCase().endsWith('.md') || doc.nombreArchivo.toLowerCase().endsWith('.markdown');
   }
 
+  isPdf(doc: DocumentDetail): boolean {
+    return doc.mimeType === 'application/pdf' || doc.nombreArchivo.toLowerCase().endsWith('.pdf');
+  }
+
+  selectTab(tab: 'archivo' | 'texto'): void {
+    this.tab.set(tab);
+  }
+
   private show(detail: DocumentDetail): void {
     this.document.set(detail);
+    this.loading.set(false);
     this.error.set(null);
     if (detail.estado === 'PROCESANDO') {
       this.notifications.subscribe(detail.id);
+    }
+  }
+
+  private loadOriginal(detail: DocumentDetail): void {
+    this.api.file(detail.id).subscribe({
+      next: (blob) => {
+        if (!blob || blob.size === 0 || (blob.type && blob.type.includes('json'))) {
+          this.previewError.set('No se pudo abrir la vista previa del archivo.');
+          return;
+        }
+        if (this.isPdf(detail)) {
+          this.revoke();
+          this.objectUrl = URL.createObjectURL(blob);
+          this.previewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.objectUrl));
+          return;
+        }
+        void blob.text().then((text) => this.originalText.set(text));
+      },
+      error: () => this.previewError.set('No se pudo abrir la vista previa del archivo.')
+    });
+  }
+
+  private resetPreview(): void {
+    this.tab.set('archivo');
+    this.previewUrl.set(null);
+    this.originalText.set(null);
+    this.previewError.set(null);
+    this.revoke();
+  }
+
+  private revoke(): void {
+    if (this.objectUrl) {
+      URL.revokeObjectURL(this.objectUrl);
+      this.objectUrl = null;
     }
   }
 }

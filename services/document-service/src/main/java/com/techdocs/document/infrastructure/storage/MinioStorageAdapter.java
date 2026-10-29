@@ -1,12 +1,14 @@
 package com.techdocs.document.infrastructure.storage;
 
 import com.techdocs.document.application.ports.out.FileStoragePort;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 @Component
 public class MinioStorageAdapter implements FileStoragePort {
@@ -30,6 +32,15 @@ public class MinioStorageAdapter implements FileStoragePort {
                     .build());
         } catch (Exception exception) {
             throw new IllegalStateException("No se pudo guardar el archivo en el bucket.", exception);
+        }
+    }
+
+    @Override
+    public byte[] get(String key) {
+        try (InputStream input = minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(key).build())) {
+            return input.readAllBytes();
+        } catch (Exception exception) {
+            throw new IllegalStateException("No se pudo leer el archivo " + key, exception);
         }
     }
 }

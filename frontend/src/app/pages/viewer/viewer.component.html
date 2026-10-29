@@ -7,6 +7,12 @@
   <p class="error">{{ message }}</p>
 }
 
+@if (loading()) {
+  <div class="skeleton" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+}
+
 @if (document(); as doc) {
   <section class="page-head viewer-head">
     <p class="eyebrow">HU-03 · Lectura</p>
@@ -14,17 +20,21 @@
       <h1>{{ doc.titulo }}</h1>
       <span class="badge" [class.PROCESANDO]="doc.estado === 'PROCESANDO'" [class.INDEXADO]="doc.estado === 'INDEXADO'" [class.ERROR]="doc.estado === 'ERROR'">{{ doc.estado }}</span>
     </div>
-    <p class="lede">{{ doc.nombreArchivo }} · {{ bytes(doc.tamanoBytes) }}</p>
+    <p class="lede">{{ doc.nombreArchivo }} · {{ bytes(doc.tamanoBytes) }}. Lee el archivo aqui, sin descargarlo.</p>
   </section>
 
   <div class="viewer">
     <aside class="panel meta-panel">
+      <p class="meta-kicker">Metadatos</p>
       <dl>
         <div><dt>Autor</dt><dd>{{ doc.autor }}</dd></div>
         <div><dt>Categoria</dt><dd>{{ doc.categoria }}</dd></div>
         <div><dt>Version</dt><dd>{{ doc.version }}</dd></div>
         <div><dt>Tipo</dt><dd>{{ doc.mimeType }}</dd></div>
+        <div><dt>Archivo</dt><dd>{{ doc.nombreArchivo }}</dd></div>
+        <div><dt>Tamano</dt><dd>{{ bytes(doc.tamanoBytes) }}</dd></div>
         <div><dt>Creado</dt><dd>{{ doc.creadoEn | date:'dd MMM yyyy, HH:mm' }}</dd></div>
+        <div><dt>Actualizado</dt><dd>{{ doc.actualizadoEn | date:'dd MMM yyyy, HH:mm' }}</dd></div>
         <div>
           <dt>Etiquetas</dt>
           <dd class="tags">
@@ -39,9 +49,38 @@
     </aside>
 
     <article class="panel prose">
-      @if (doc.estado === 'PROCESANDO') {
+      <div class="view-tabs" role="tablist" aria-label="Vista del documento">
+        <button type="button" role="tab" [class.active]="tab() === 'archivo'" [attr.aria-selected]="tab() === 'archivo'" (click)="selectTab('archivo')">Archivo</button>
+        <button type="button" role="tab" [class.active]="tab() === 'texto'" [attr.aria-selected]="tab() === 'texto'" (click)="selectTab('texto')">Texto extraido</button>
+      </div>
+
+      @if (tab() === 'archivo') {
+        @if (previewError(); as message) {
+          <p class="error">{{ message }}</p>
+        } @else if (isPdf(doc)) {
+          @if (previewUrl(); as url) {
+            <iframe class="preview-frame" [src]="url" title="Vista previa del PDF"></iframe>
+          } @else {
+            <div class="empty-card">
+              <p>Preparando la vista previa del PDF...</p>
+            </div>
+          }
+        } @else {
+          @if (originalText(); as text) {
+            @if (isMarkdown(doc)) {
+              <div class="md" [innerHTML]="markdown(text)"></div>
+            } @else {
+              <pre>{{ text }}</pre>
+            }
+          } @else {
+            <div class="empty-card">
+              <p>Cargando el archivo original para leerlo en pantalla...</p>
+            </div>
+          }
+        }
+      } @else if (doc.estado === 'PROCESANDO') {
         <div class="empty-card">
-          <p>El documento se esta procesando. Esta vista se actualizara cuando quede indexado.</p>
+          <p>El texto extraido aparece cuando el documento quede indexado. Mientras tanto puedes leer el archivo original.</p>
         </div>
       } @else if (doc.estado === 'ERROR') {
         <p class="error">{{ doc.error || 'No se pudo indexar el documento.' }}</p>
@@ -49,7 +88,7 @@
         <p>El documento esta indexado, pero el cuerpo todavia no esta disponible.</p>
       } @else if (isMarkdown(doc)) {
         <div class="md" [innerHTML]="markdown(doc.contenido)"></div>
-      } @else if (doc.mimeType === 'application/pdf') {
+      } @else if (isPdf(doc)) {
         @for (page of pages(doc.contenido); track page.title) {
           <section class="page-block">
             <h3>{{ page.title }}</h3>

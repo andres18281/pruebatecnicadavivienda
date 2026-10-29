@@ -19,6 +19,10 @@ export class ApiService {
     return this.http.get<DocumentDetail>(`/api/v1/documents/${id}`);
   }
 
+  file(id: string): Observable<Blob> {
+    return this.http.get(`/api/v1/documents/${id}/file`, { responseType: 'blob' });
+  }
+
   search(query: string, page: number, size: number, categoria: string, etiqueta: string): Observable<SearchPage> {
     let params = new HttpParams().set('q', query).set('page', page).set('size', size);
     if (categoria.trim()) {

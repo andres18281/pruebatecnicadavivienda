@@ -1,6 +1,7 @@
 package com.techdocs.document.bootstrap;
 
 import com.techdocs.document.application.ports.in.GetDocumentDetailUseCase;
+import com.techdocs.document.application.ports.in.GetDocumentFileUseCase;
 import com.techdocs.document.application.ports.in.GetDocumentStatusUseCase;
 import com.techdocs.document.application.ports.in.UploadBatchUseCase;
 import com.techdocs.document.application.ports.in.UploadDocumentUseCase;
@@ -8,6 +9,7 @@ import com.techdocs.document.application.ports.out.ContentReaderPort;
 import com.techdocs.document.application.ports.out.DocumentRepository;
 import com.techdocs.document.application.ports.out.FileStoragePort;
 import com.techdocs.document.application.usecases.GetDocumentDetailService;
+import com.techdocs.document.application.usecases.GetDocumentFileService;
 import com.techdocs.document.application.usecases.GetDocumentStatusService;
 import com.techdocs.document.application.usecases.UploadBatchService;
 import com.techdocs.document.application.usecases.UploadDocumentService;
@@ -41,6 +43,11 @@ public class UseCaseConfig {
     @Bean
     GetDocumentDetailUseCase getDocumentDetailUseCase(DocumentRepository documents, ContentReaderPort content) {
         return new GetDocumentDetailService(documents, content);
+    }
+
+    @Bean
+    GetDocumentFileUseCase getDocumentFileUseCase(DocumentRepository documents, FileStoragePort storage) {
+        return new GetDocumentFileService(documents, storage);
     }
 
     @Bean
